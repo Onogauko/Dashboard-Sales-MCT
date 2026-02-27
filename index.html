@@ -50,6 +50,17 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         .chart-container { position: relative; height: 250px; width: 100%; margin-top: 8px; }
+        
+        /* Animasi Loading Spin */
+        .loader {
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
@@ -102,7 +113,14 @@
         <div id="uploadStatus" class="hidden text-sm text-center py-2 font-bold tracking-wide text-white shadow-md transition-colors duration-300 bg-blue-600"></div>
     </nav>
 
-    <!-- Main Workspace -->
+    <!-- LOADING SCREEN AWAL -->
+    <div id="loadingScreen" class="flex-1 flex flex-col items-center justify-center min-h-[80vh]">
+        <div class="loader mb-4"></div>
+        <h2 class="text-lg font-bold text-slate-700">Menyiapkan Dashboard</h2>
+        <p id="loadingTextDetail" class="text-sm text-slate-500 mt-1">Sedang mengunduh data penjualan dari Cloud...</p>
+    </div>
+
+    <!-- Main Workspace (Disembunyikan saat Loading) -->
     <main class="flex-1 p-4">
         <div id="dashboardWorkspace" class="hidden max-w-[1600px] mx-auto space-y-4 animate-fade-in pb-8">
             
@@ -333,7 +351,12 @@
             } catch (e) { 
                 console.error("Firebase gagal diinisialisasi.", e); 
                 cloudIndicatorTxt.innerText = 'Error Init DB';
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('dashboardWorkspace').classList.remove('hidden');
             }
+        } else {
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('dashboardWorkspace').classList.remove('hidden');
         }
 
         let masterData = [], filteredData = [];
@@ -345,15 +368,20 @@
         const txtProcess = document.getElementById('txtProcess');
         const uploadStatus = document.getElementById('uploadStatus');
         const dashboardWorkspace = document.getElementById('dashboardWorkspace');
+        const loadingScreen = document.getElementById('loadingScreen');
+        const loadingTextDetail = document.getElementById('loadingTextDetail');
 
         function getCloudRef() {
-            return collection(db, 'artifacts', appId, 'public', 'data', 'retail_monthly_v8');
+            // Karena kita mengubah struktur memori agar tidak ganda, mari gunakan Laci Data Baru (v9)
+            return collection(db, 'artifacts', appId, 'public', 'data', 'retail_monthly_v9');
         }
 
         async function loadFromCloud() {
             if(!db) return;
             try {
                 cloudIndicatorTxt.innerText = 'Membaca Cloud...';
+                loadingTextDetail.innerText = 'Mengambil data dari Firebase (ini mungkin butuh beberapa detik tergantung koneksi Anda)...';
+                
                 const snap = await getDocs(query(getCloudRef()));
                 let all = [];
                 snap.forEach(d => {
@@ -367,10 +395,12 @@
                     initDashboard(); 
                 } else {
                     cloudIndicatorTxt.innerText = 'Cloud Kosong';
+                    initDashboard(); // Tampilkan dashboard kosong
                 }
             } catch(e) { 
                 console.error('Gagal sinkronisasi data:', e);
                 cloudIndicatorTxt.innerText = 'Gagal Akses Cloud'; 
+                initDashboard();
             }
         }
 
@@ -481,20 +511,21 @@
         const formatCurrency = (v, p='Rp ') => p + new Intl.NumberFormat('id-ID').format(Math.floor(v||0));
         const formatShort = v => { if(!v) return '0'; if(v >= 1e9) return (v/1e9).toFixed(1) + 'M'; if(v >= 1e6) return (v/1e6).toFixed(1) + 'Jt'; return Math.floor(v); };
         
+        // ======================================================================
+        // PERBAIKAN REVOLUSIONER: ANTI-ERROR ANGKA DESIMAL
+        // Mesin akan 100% menghargai titik tunggal (.) sebagai koma desimal
+        // tanpa membesarkan angka ratusan ribu menjadi ratusan juta!
+        // ======================================================================
         const parseNumber = s => {
             if(!s) return 0; if(typeof s === 'number') return s;
             let clean = String(s).trim().replace(/Rp|IDR|\s/ig, '');
-            if((clean.match(/\./g) || []).length > 1) clean = clean.replace(/\./g, '');
-            else if(clean.includes(',') && clean.includes('.')) {
+            if(clean.includes(',') && clean.includes('.')) {
                 let c = clean.lastIndexOf(','), d = clean.lastIndexOf('.');
                 if(c > d) clean = clean.replace(/\./g, '').replace(',', '.'); 
                 else clean = clean.replace(/,/g, ''); 
             }
+            else if((clean.match(/\./g) || []).length > 1) clean = clean.replace(/\./g, '');
             else if(clean.includes(',')) clean = clean.replace(/,/g, '');
-            else if(clean.includes('.')) {
-                let parts = clean.split('.');
-                if (parts[parts.length - 1].length === 3) clean = clean.replace(/\./g, '');
-            }
             return parseFloat(clean) || 0;
         };
 
@@ -550,7 +581,7 @@
                 const cDate = getColAccessor(sample, dateColKeys);
                 if(cDate) {
                     data.forEach(r => { 
-                        if(r[cDate]) {
+                        if(r[cDate] && !String(r[cDate]).toLowerCase().includes('total')) {
                             const std = getStdDate(r[cDate]);
                             if (std !== 'Unknown') dates.add(std);
                         }
@@ -560,7 +591,7 @@
                     const cDateCol = keys.find(k => ['date','tanggal','bulan'].includes(k.replace(/^\uFEFF/, '').toLowerCase().trim()));
                     if(cDateCol) {
                         data.forEach(r => {
-                            if(r[cDateCol]) {
+                            if(r[cDateCol] && !String(r[cDateCol]).toLowerCase().includes('total')) {
                                 const std = getStdDate(r[cDateCol]);
                                 if (std !== 'Unknown') dates.add(std);
                             }
@@ -569,6 +600,34 @@
                 }
             }
             return dates;
+        }
+
+        function getUploadedMonths(data, dateColKeys) {
+            const months = new Set();
+            if(data && data.length > 0) {
+                const sample = data[0];
+                const cDate = getColAccessor(sample, dateColKeys);
+                if(cDate) {
+                    data.forEach(r => { 
+                        if(r[cDate] && !String(r[cDate]).toLowerCase().includes('total')) {
+                            const mk = getMonthKey(r[cDate]);
+                            if (mk !== 'Unknown') months.add(mk);
+                        }
+                    });
+                } else if (dateColKeys.includes('bulan')) {
+                    const keys = Object.keys(sample);
+                    const cDateCol = keys.find(k => ['date','tanggal','bulan'].includes(k.replace(/^\uFEFF/, '').toLowerCase().trim()));
+                    if(cDateCol) {
+                        data.forEach(r => {
+                            if(r[cDateCol] && !String(r[cDateCol]).toLowerCase().includes('total')) {
+                                const mk = getMonthKey(r[cDateCol]);
+                                if (mk !== 'Unknown') months.add(mk);
+                            }
+                        });
+                    }
+                }
+            }
+            return months;
         }
 
         ['fileSales', 'fileBudget', 'fileDisposal', 'fileDiscount'].forEach(id => {
@@ -625,15 +684,23 @@
         function executeDataMergeFast() {
             try {
                 const sDates = getUploadedDates(rawDataStore.sales, ['Sales Date', 'Adjustment Date', 'Date', 'Tanggal']);
-                const bDates = getUploadedDates(rawDataStore.budget, ['date','tanggal','bulan']);
                 const dDates = getUploadedDates(rawDataStore.disposal, ['Sales Date', 'Adjustment Date', 'Date', 'Tanggal']);
                 const cDates = getUploadedDates(rawDataStore.discount, ['Sales Date', 'Adjustment Date', 'Date', 'Tanggal']);
                 
+                const bMonths = getUploadedMonths(rawDataStore.budget, ['date','tanggal','bulan']);
+                
                 const modifiedDates = new Set();
                 sDates.forEach(d => modifiedDates.add(d));
-                bDates.forEach(d => modifiedDates.add(d));
                 dDates.forEach(d => modifiedDates.add(d));
                 cDates.forEach(d => modifiedDates.add(d));
+
+                if (bMonths.size > 0) {
+                    masterData.forEach(r => {
+                        if (bMonths.has(r.monthKey)) modifiedDates.add(r.date);
+                    });
+                    const bDatesExact = getUploadedDates(rawDataStore.budget, ['date','tanggal','bulan']);
+                    bDatesExact.forEach(d => modifiedDates.add(d));
+                }
 
                 const map = new Map();
                 
@@ -642,9 +709,10 @@
                     let stdDate = clone.date; 
 
                     if(sDates.has(stdDate)) { clone.sales = 0; clone.cost = 0; }
-                    if(bDates.has(stdDate)) { clone.budget = 0; }
                     if(dDates.has(stdDate)) { clone.disposal = 0; }
                     if(cDates.has(stdDate)) { clone.discount = 0; }
+                    
+                    if(bMonths.has(clone.monthKey)) { clone.budget = 0; } 
                     
                     map.set(`${stdDate}|${clone.division}|${clone.deptCode||''}|${clone.sku||''}`, clone);
                 }); 
@@ -672,7 +740,8 @@
                     for(let i=0; i<rawDataStore.sales.length; i++) {
                         const row = rawDataStore.sales[i];
                         const rawD = row[cDate], dRaw = row[cDept];
-                        if(!rawD || !dRaw) continue;
+                        
+                        if(!rawD || !dRaw || String(rawD).toLowerCase().includes('total') || String(dRaw).toLowerCase().includes('total')) continue;
                         
                         const d = getStdDate(rawD);
                         if(d === 'Unknown') continue;
@@ -681,7 +750,6 @@
                         let sku = cSku ? String(row[cSku]).trim() : '';
                         let item = cItem ? String(row[cItem]).trim() : '';
                         
-                        // FIX: Hapus "replace(/^0+/, '')" agar angka nol di depan SKU tetap utuh!
                         let itemKey = sku || item || 'UNKNOWN'; 
                         let itemDesc = sku && item ? `${sku} - ${item}` : (item || sku || '');
                         
@@ -708,12 +776,16 @@
                         const row = rawDataStore.budget[i];
                         if(!cDate) continue;
                         const rawD = row[cDate];
-                        if(!rawD) continue;
+                        
+                        if(!rawD || String(rawD).toLowerCase().includes('total')) continue;
+                        
                         const d = getStdDate(rawD);
                         if(d === 'Unknown') continue;
 
                         if (cDept && row[cDept]) {
                             const rawHeader = row[cDept];
+                            if(String(rawHeader).toLowerCase().includes('total')) continue;
+
                             const div = getDiv(rawHeader);
                             let finalDept = '';
                             let parsedCode = parseInt(String(rawHeader).split(' ')[0], 10);
@@ -760,7 +832,8 @@
                         for(let i=0; i<rawDataStore[type].length; i++) {
                             const row = rawDataStore[type][i];
                             const rawD = row[cDate], dRaw = row[cDept];
-                            if(!rawD || !dRaw) continue;
+                            
+                            if(!rawD || !dRaw || String(rawD).toLowerCase().includes('total') || String(dRaw).toLowerCase().includes('total')) continue;
 
                             const d = getStdDate(rawD);
                             if(d === 'Unknown') continue;
@@ -769,7 +842,6 @@
                             let sku = cSku ? String(row[cSku]).trim() : '';
                             let item = cItem ? String(row[cItem]).trim() : '';
                             
-                            // FIX: SKU Utuh Tanpa dipotong nol depannya
                             let itemKey = sku || item || 'UNKNOWN';
                             let itemDesc = sku && item ? `${sku} - ${item}` : (item || sku || '');
 
@@ -818,7 +890,9 @@
         }
 
         function initDashboard() {
+            loadingScreen.classList.add('hidden');
             dashboardWorkspace.classList.remove('hidden');
+            
             const mSel = document.getElementById('filterMonth'), dSel = document.getElementById('filterDivision'), dpSel = document.getElementById('filterDepartment');
             const months = [...new Set(masterData.map(d => d.monthKey))].filter(m => m!=='Unknown').sort();
             const divs = [...new Set(masterData.map(d => d.division))].sort();
@@ -1062,7 +1136,6 @@
             location.reload();
         };
 
-        // Fungsi membersihkan Nama Item dari nomor SKU yang menempel
         const parseSkuInfo = (skuVal, descVal) => {
             let sku = skuVal || '-';
             let desc = descVal || 'TANPA NAMA';
@@ -1074,18 +1147,14 @@
             return { sku, desc };
         };
 
-        // Modal Ramping: Top 10 Sales
         document.getElementById('btnBreakdownSales').onclick = () => {
             const m = {}; let t = 0; 
             filteredData.forEach(x => { 
                 t += x.sales; 
                 if(x.sales !== 0){ 
                     let key = x.sku || 'UNKNOWN';
-                    if (!m[key]) {
-                        m[key] = { ...parseSkuInfo(x.sku, x.itemDesc), sales: 0 };
-                    }
+                    if (!m[key]) m[key] = { ...parseSkuInfo(x.sku, x.itemDesc), sales: 0 };
                     m[key].sales += x.sales;
-                    
                     let cDesc = parseSkuInfo(x.sku, x.itemDesc).desc;
                     if(cDesc.length > m[key].desc.length && cDesc !== 'TANPA NAMA') m[key].desc = cDesc;
                 } 
@@ -1106,19 +1175,14 @@
             document.getElementById('salesModal').classList.remove('hidden');
         };
 
-        // Modal Ramping: Top 10 Disposal
         document.getElementById('btnBreakdownDisposal').onclick = () => {
             const m = {}; let t = 0; 
             filteredData.forEach(x => { 
                 t += x.disposal; 
                 let key = x.sku || 'UNKNOWN';
-                
-                if (!m[key]) {
-                    m[key] = { ...parseSkuInfo(x.sku, x.itemDesc), sales: 0, disposal: 0 };
-                }
+                if (!m[key]) m[key] = { ...parseSkuInfo(x.sku, x.itemDesc), sales: 0, disposal: 0 };
                 m[key].sales += x.sales;
                 m[key].disposal += x.disposal;
-
                 let cDesc = parseSkuInfo(x.sku, x.itemDesc).desc;
                 if(cDesc.length > m[key].desc.length && cDesc !== 'TANPA NAMA') m[key].desc = cDesc;
             });
@@ -1144,19 +1208,14 @@
             document.getElementById('disposalModal').classList.remove('hidden');
         };
 
-        // Modal Ramping: Top 10 Discount
         document.getElementById('btnBreakdownDiscount').onclick = () => {
             const m = {}; let t = 0; 
             filteredData.forEach(x => { 
                 t += x.discount; 
                 let key = x.sku || 'UNKNOWN';
-                
-                if (!m[key]) {
-                    m[key] = { ...parseSkuInfo(x.sku, x.itemDesc), sales: 0, discount: 0 };
-                }
+                if (!m[key]) m[key] = { ...parseSkuInfo(x.sku, x.itemDesc), sales: 0, discount: 0 };
                 m[key].sales += x.sales;
                 m[key].discount += x.discount;
-
                 let cDesc = parseSkuInfo(x.sku, x.itemDesc).desc;
                 if(cDesc.length > m[key].desc.length && cDesc !== 'TANPA NAMA') m[key].desc = cDesc;
             });
