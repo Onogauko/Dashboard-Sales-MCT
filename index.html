@@ -99,7 +99,7 @@
                 </button>
             </div>
         </div>
-        <div id="uploadStatus" class="hidden text-xs text-center py-1.5 font-bold tracking-wide text-white shadow-md"></div>
+        <div id="uploadStatus" class="hidden text-xs text-center py-1.5 font-bold tracking-wide text-white shadow-md bg-blue-600"></div>
     </nav>
 
     <!-- Main Workspace -->
@@ -220,9 +220,8 @@
         if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
 
         // ======================================================================
-        // 🌟 KONFIGURASI FIREBASE CLOUD DATABASE ANDA
+        // 🌟 KONFIGURASI FIREBASE ANDA
         // ======================================================================
-
         const myFirebaseConfig = {
             apiKey: "AIzaSyAulLwce6oWuyHd74IgJii1cTEiVmxVwQk",
             authDomain: "dashboard-sales-mct.firebaseapp.com",
@@ -232,28 +231,24 @@
             appId: "1:772083832698:web:f48bc1201e471faf2d28c3",
             measurementId: "G-S7GEBY1EWV"
         };
-
         // ======================================================================
 
+        // Menggunakan versi DB baru (_v5) agar bersih
         const appId = 'retail-dashboard-toko';
         let db = null;
         
         const cloudIndicatorTxt = document.getElementById('cloudIndicatorTxt');
 
-        // Hubungkan Firebase langsung ke Database Anda
+        // Init Firebase
         if (myFirebaseConfig && myFirebaseConfig.appId) {
             try {
                 const app = initializeApp(myFirebaseConfig);
                 db = getFirestore(app);
-                
-                // Langsung coba tarik data saat halaman pertama kali dibuka
                 setTimeout(() => loadFromCloud(), 500); 
             } catch (e) { 
                 console.error("Firebase gagal diinisialisasi.", e); 
                 cloudIndicatorTxt.innerText = 'Error Init DB';
             }
-        } else {
-            console.warn("Harap masukkan appId Firebase Anda.");
         }
 
         let masterData = [], filteredData = [];
@@ -266,9 +261,8 @@
         const uploadStatus = document.getElementById('uploadStatus');
         const dashboardWorkspace = document.getElementById('dashboardWorkspace');
 
-        // Menggunakan jalur data yang sama agar seluruh tim melihat angka yang sama
         function getCloudRef() {
-            return collection(db, 'artifacts', appId, 'public', 'data', 'retail_monthly_v3');
+            return collection(db, 'artifacts', appId, 'public', 'data', 'retail_monthly_v5');
         }
 
         async function loadFromCloud() {
@@ -295,30 +289,39 @@
             }
         }
 
-        // PERBAIKAN CHUNKING: Diperkecil menjadi 1000 agar tidak kena limit error batas ukuran Firebase
+        // =======================================================
+        // PERBAIKAN: Sistem Antrean Upload (Mencegah Macet di Cloud)
+        // =======================================================
         async function saveToCloud() {
             if(!db) return;
             try {
-                cloudIndicatorTxt.innerText = 'Menyimpan ke Cloud...';
-                document.getElementById('cloudIndicator').classList.replace('text-emerald-400', 'text-amber-400');
+                document.getElementById('cloudIndicator').classList.remove('text-emerald-400', 'text-slate-300');
+                document.getElementById('cloudIndicator').classList.add('text-amber-400');
                 
                 const colRef = getCloudRef();
                 
-                // Bersihkan laci cloud lama agar data tidak menumpuk/dobel
+                // 1. Bersihkan cloud lama
+                cloudIndicatorTxt.innerText = 'Menyiapkan Cloud...';
                 const snap = await getDocs(query(colRef));
                 const delPs = [];
                 snap.forEach(d => delPs.push(deleteDoc(d.ref)));
                 await Promise.all(delPs);
 
-                // Potong data menjadi per 1000 baris agar ukuran file aman (sangat ringan)
+                // 2. Upload secara berurutan (Sequential) per 1000 baris
                 const chunkSize = 1000;
-                const ps = [];
+                const totalChunks = Math.ceil(masterData.length / chunkSize);
+                
                 for(let i=0; i < masterData.length; i += chunkSize) {
                     const chunk = masterData.slice(i, i + chunkSize);
-                    ps.push(setDoc(doc(colRef, `chunk_${i}`), { data: JSON.stringify(chunk), updatedAt: new Date().toISOString() }));
+                    const chunkNumber = Math.floor(i/chunkSize) + 1;
+                    
+                    // Update teks persentase di layar
+                    cloudIndicatorTxt.innerText = `Menyimpan: ${chunkNumber} / ${totalChunks}`;
+                    
+                    // AWAIT: Tunggu paket ini selesai disimpan baru lanjut ke paket berikutnya
+                    await setDoc(doc(colRef, `chunk_${i}`), { data: JSON.stringify(chunk), updatedAt: new Date().toISOString() });
                 }
                 
-                await Promise.all(ps);
                 cloudIndicatorTxt.innerText = `Berhasil Tersimpan!`;
                 document.getElementById('cloudIndicator').classList.replace('text-amber-400', 'text-emerald-400');
             } catch(e) { 
@@ -327,6 +330,9 @@
             }
         }
 
+        // ==========================================
+        // KAMUS DEPARTEMEN & DIVISI LENGKAP
+        // ==========================================
         function getDivisionFromDept(deptStr) {
             if (!deptStr) return 'UNKNOWN';
             let code = parseInt(String(deptStr).split(' ')[0], 10);
@@ -454,7 +460,7 @@
             
             btnProcess.disabled = true; 
             txtProcess.innerText = "Memproses Data...";
-            uploadStatus.innerHTML = "<div class='bg-blue-600 py-1.5 font-bold tracking-wide animate-pulse'>Memproses Ribuan Baris File...</div>";
+            uploadStatus.innerHTML = "Memproses File CSV di Memori Lokal...";
             uploadStatus.classList.remove('hidden');
             
             Object.entries(files).forEach(([key, id]) => {
@@ -477,8 +483,8 @@
         function executeDataMergeFast() {
             try {
                 const map = new Map();
-                // Sengaja tidak mereset masterData jika mau ditambahkan, tapi disini kita reset
-                masterData.forEach(r => map.set(`${r.date}|${r.division}|${r.deptCode||''}|${r.sku||''}`, {...r})); 
+                // Hapus data lama agar tidak dobel
+                masterData = []; 
 
                 const tsCache = {}, mkCache = {}, divCache = {};
                 const getTs = d => { if(!tsCache[d]) tsCache[d] = parseDateString(d).getTime(); return tsCache[d]; };
@@ -607,13 +613,14 @@
                 masterData = Array.from(map.values());
                 rawDataStore = { sales: [], budget: [], disposal: [], discount: [] };
                 
-                // Memicu penyimpanan otomatis ke Cloud setelah proses gabung (Merge)
+                // Segera tampilkan dashboard terlebih dahulu
+                initDashboard(); 
+                
+                // Lalu mulai upload berurutan ke Cloud
                 saveToCloud().then(() => { 
-                    initDashboard(); 
                     txtProcess.innerText = "Proses Data"; 
                     btnProcess.disabled = false;
-                    uploadStatus.innerHTML = "<div class='bg-emerald-500 py-1.5 font-bold tracking-wide'>✅ PROSES SELESAI!</div>";
-                    setTimeout(() => uploadStatus.classList.add('hidden'), 4000);
+                    uploadStatus.classList.add('hidden');
                 });
 
             } catch (err) {
@@ -869,6 +876,7 @@
             location.reload();
         };
 
+        // FIX MODAL: Group by SKU exact match
         document.getElementById('btnBreakdownSales').onclick = () => {
             const m = {}; let t = 0; 
             filteredData.forEach(x => { 
