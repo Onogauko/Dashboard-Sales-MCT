@@ -321,8 +321,8 @@
                     if(modifiedDates.has(r.date)) rowsByDate[r.date].push(r);
                 });
 
-                // 3. Siapkan Antrean Pengiriman
-                const uploadPs = [];
+                // 3. Siapkan Antrean Pengiriman (Lazy Execution agar tidak macet)
+                const uploadTasks = [];
                 const chunkSize = 2000;
                 
                 modifiedDates.forEach(dateStr => {
@@ -330,18 +330,21 @@
                     for(let i=0; i<rows.length; i+=chunkSize) {
                         const chunk = rows.slice(i, i+chunkSize);
                         const docId = `${dateStr}_${i}`;
-                        uploadPs.push( setDoc(doc(colRef, docId), { data: JSON.stringify(chunk), updatedAt: new Date().toISOString() }) );
+                        // BUG FIX: Simpan sebagai fungsi agar tidak tereksekusi serentak
+                        uploadTasks.push( () => setDoc(doc(colRef, docId), { data: JSON.stringify(chunk), updatedAt: new Date().toISOString() }) );
                     }
                 });
                 
-                // 4. Kirim secara pararel agar kilat
+                // 4. Kirim secara pararel yang TERKONTROL (10 antrean per batch)
                 const batchSize = 10;
-                for (let i = 0; i < uploadPs.length; i += batchSize) {
-                    const batch = uploadPs.slice(i, i + batchSize);
-                    const pct = Math.round(((i + batch.length) / uploadPs.length) * 100);
+                for (let i = 0; i < uploadTasks.length; i += batchSize) {
+                    const batch = uploadTasks.slice(i, i + batchSize);
+                    const pct = Math.min(100, Math.round(((i + batch.length) / uploadTasks.length) * 100));
                     uploadStatus.innerHTML = `<i data-lucide="cloud-upload" class="inline w-5 h-5 mr-1 align-text-bottom"></i> Menyinkronkan Perubahan: <b>${pct}% Selesai</b>`;
                     lucide.createIcons();
-                    await Promise.all(batch);
+                    
+                    // Eksekusi API secara terkontrol
+                    await Promise.all(batch.map(task => task()));
                 }
                 
                 cloudIndicatorTxt.innerText = `Berhasil Tersimpan!`;
