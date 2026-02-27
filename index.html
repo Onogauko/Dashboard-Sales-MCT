@@ -154,12 +154,15 @@
                     </div>
                 </div>
 
-                <div class="glass-panel card-hover p-4 border-l-4 border-l-warning flex flex-col justify-between shadow-sm bg-white h-full">
+                <div class="glass-panel card-hover p-4 border-l-4 border-l-warning flex flex-col justify-between shadow-sm bg-white h-full relative">
                     <div class="flex justify-between items-start mb-2">
                         <div><p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Discount</p><h3 id="kpiTotalDiscount" class="text-2xl font-black text-slate-800 leading-tight">Rp 0</h3></div>
                         <div class="p-3 bg-amber-50 rounded-lg text-warning"><i data-lucide="tag" class="w-6 h-6"></i></div>
                     </div>
-                    <div class="text-xs mt-auto"><span id="kpiDiscountPct" class="font-bold text-warning text-sm">0%</span><span class="text-slate-400 ml-1.5 font-medium">dari Sales</span></div>
+                    <div class="flex items-center justify-between text-xs mt-auto w-full">
+                        <div><span id="kpiDiscountPct" class="font-bold text-warning text-sm">0%</span><span class="text-slate-400 ml-1.5 font-medium">dari Sales</span></div>
+                        <button id="btnBreakdownDiscount" class="flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 px-2.5 py-1.5 rounded transition font-bold text-[10px] uppercase tracking-wide border border-amber-100"><i data-lucide="list" class="w-3.5 h-3.5"></i> Top 10 Item</button>
+                    </div>
                 </div>
             </section>
 
@@ -208,6 +211,9 @@
     <div id="salesModal" class="hidden fixed inset-0 bg-slate-900/60 z-[60] flex items-center justify-center backdrop-blur-sm p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"><div class="p-5 bg-blue-50 border-b border-blue-100 flex justify-between items-center"><div><h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i data-lucide="award" class="w-5 h-5 text-blue-500"></i> Top 10 Item Sales</h3><p id="salesModalSubtitle" class="text-xs text-slate-500 mt-1"></p></div><button onclick="document.getElementById('salesModal').classList.add('hidden')" class="p-2 text-slate-400 hover:bg-slate-100 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="overflow-y-auto flex-1"><table class="w-full text-sm text-left"><thead class="text-xs text-slate-500 uppercase bg-slate-50 sticky top-0"><tr><th class="px-4 py-3 text-center w-12">#</th><th class="px-4 py-3">Deskripsi SKU / Item</th><th class="px-4 py-3 text-right">Nilai Sales</th><th class="px-4 py-3 text-right w-24">% Kontrib</th></tr></thead><tbody id="salesBreakdownBody" class="divide-y"></tbody></table></div><div class="p-4 bg-slate-50 border-t flex justify-between items-center"><span class="text-sm font-bold">Total (Terfilter):</span><span id="salesTotalLabel" class="text-lg font-bold text-blue-600">Rp 0</span></div></div></div>
     
     <div id="disposalModal" class="hidden fixed inset-0 bg-slate-900/60 z-[60] flex items-center justify-center backdrop-blur-sm p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]"><div class="p-5 bg-red-50 border-b border-red-100 flex justify-between items-center"><div><h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i data-lucide="trash-2" class="w-5 h-5 text-red-500"></i> Top 10 Item Disposal</h3><p id="disposalModalSubtitle" class="text-xs text-slate-500 mt-1"></p></div><button onclick="document.getElementById('disposalModal').classList.add('hidden')" class="p-2 text-slate-400 hover:bg-slate-100 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="overflow-y-auto flex-1"><table class="w-full text-sm text-left"><thead class="text-xs text-slate-500 uppercase bg-slate-50 sticky top-0"><tr><th class="px-4 py-3 text-center w-12">#</th><th class="px-4 py-3">Deskripsi SKU / Item</th><th class="px-4 py-3 text-right">Nilai Sales</th><th class="px-4 py-3 text-right">Nilai Disposal</th><th class="px-4 py-3 text-right" title="Persentase Disposal terhadap Sales item ini">% Disp/Sales</th><th class="px-4 py-3 text-right w-24">% Kontrib</th></tr></thead><tbody id="disposalBreakdownBody" class="divide-y"></tbody></table></div><div class="p-4 bg-slate-50 border-t flex justify-between items-center"><span class="text-sm font-bold">Total (Terfilter):</span><span id="disposalTotalLabel" class="text-lg font-bold text-red-600">Rp 0</span></div></div></div>
+
+    <!-- Modal Top 10 Discount Baru -->
+    <div id="discountModal" class="hidden fixed inset-0 bg-slate-900/60 z-[60] flex items-center justify-center backdrop-blur-sm p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]"><div class="p-5 bg-amber-50 border-b border-amber-100 flex justify-between items-center"><div><h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i data-lucide="tag" class="w-5 h-5 text-amber-500"></i> Top 10 Item Discount</h3><p id="discountModalSubtitle" class="text-xs text-slate-500 mt-1"></p></div><button onclick="document.getElementById('discountModal').classList.add('hidden')" class="p-2 text-slate-400 hover:bg-slate-100 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="overflow-y-auto flex-1"><table class="w-full text-sm text-left"><thead class="text-xs text-slate-500 uppercase bg-slate-50 sticky top-0"><tr><th class="px-4 py-3 text-center w-12">#</th><th class="px-4 py-3">Deskripsi SKU / Item</th><th class="px-4 py-3 text-right">Nilai Sales</th><th class="px-4 py-3 text-right">Nilai Discount</th><th class="px-4 py-3 text-right" title="Persentase Discount terhadap Sales item ini">% Disc/Sales</th><th class="px-4 py-3 text-right w-24">% Kontrib</th></tr></thead><tbody id="discountBreakdownBody" class="divide-y"></tbody></table></div><div class="p-4 bg-slate-50 border-t flex justify-between items-center"><span class="text-sm font-bold">Total (Terfilter):</span><span id="discountTotalLabel" class="text-lg font-bold text-amber-600">Rp 0</span></div></div></div>
     
     <div id="resetModal" class="hidden fixed inset-0 bg-slate-900/60 z-[60] flex items-center justify-center backdrop-blur-sm p-4"><div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl"><div class="flex items-center gap-3 mb-3"><div class="p-2 bg-red-100 text-red-600 rounded-full"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div><h3 class="text-lg font-bold">Hapus Seluruh Data?</h3></div><p class="text-sm text-slate-600 mb-6">Data di Dashboard dan di Cloud Database akan dihapus seluruhnya secara permanen.</p><div class="flex justify-end gap-3"><button onclick="document.getElementById('resetModal').classList.add('hidden')" class="px-4 py-2 bg-slate-100 rounded-lg text-sm font-medium">Batal</button><button id="btnConfirmReset" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-bold">Ya, Bersihkan</button></div></div></div>
 
@@ -260,7 +266,6 @@
         const uploadStatus = document.getElementById('uploadStatus');
         const dashboardWorkspace = document.getElementById('dashboardWorkspace');
 
-        // Ganti Laci Database menjadi versi ke-8 untuk kebersihan data yang terstruktur
         function getCloudRef() {
             return collection(db, 'artifacts', appId, 'public', 'data', 'retail_monthly_v8');
         }
@@ -289,11 +294,6 @@
             }
         }
 
-        // =======================================================
-        // PERBAIKAN REVOLUSIONER: FAST INCREMENTAL SYNC
-        // Hanya mengirim dokumen berisi TANGGAL yang diunggah!
-        // Waktu proses turun drastis dari 30 Detik menjadi 1 Detik.
-        // =======================================================
         async function saveIncrementalToCloud(modifiedDates) {
             if(!db || modifiedDates.size === 0) return;
             try {
@@ -302,7 +302,6 @@
                 
                 const colRef = getCloudRef();
                 
-                // 1. Dapatkan daftar ID di Cloud dan hapus HANYA tanggal yang bersinggungan
                 uploadStatus.innerHTML = `Menyiapkan Sinkronisasi Bertahap (Incremental)...`;
                 const snap = await getDocs(query(colRef));
                 const delPs = [];
@@ -314,14 +313,12 @@
                 });
                 await Promise.all(delPs);
 
-                // 2. Kumpulkan baris data baru khusus untuk tanggal yang bersinggungan saja
                 const rowsByDate = {};
                 modifiedDates.forEach(d => rowsByDate[d] = []);
                 masterData.forEach(r => {
                     if(modifiedDates.has(r.date)) rowsByDate[r.date].push(r);
                 });
 
-                // 3. Siapkan Antrean Pengiriman (Lazy Execution agar tidak macet)
                 const uploadTasks = [];
                 const chunkSize = 2000;
                 
@@ -330,12 +327,10 @@
                     for(let i=0; i<rows.length; i+=chunkSize) {
                         const chunk = rows.slice(i, i+chunkSize);
                         const docId = `${dateStr}_${i}`;
-                        // BUG FIX: Simpan sebagai fungsi agar tidak tereksekusi serentak
                         uploadTasks.push( () => setDoc(doc(colRef, docId), { data: JSON.stringify(chunk), updatedAt: new Date().toISOString() }) );
                     }
                 });
                 
-                // 4. Kirim secara pararel yang TERKONTROL (10 antrean per batch)
                 const batchSize = 10;
                 for (let i = 0; i < uploadTasks.length; i += batchSize) {
                     const batch = uploadTasks.slice(i, i + batchSize);
@@ -343,7 +338,6 @@
                     uploadStatus.innerHTML = `<i data-lucide="cloud-upload" class="inline w-5 h-5 mr-1 align-text-bottom"></i> Menyinkronkan Perubahan: <b>${pct}% Selesai</b>`;
                     lucide.createIcons();
                     
-                    // Eksekusi API secara terkontrol
                     await Promise.all(batch.map(task => task()));
                 }
                 
@@ -362,7 +356,6 @@
             }
         }
 
-        // Kamus Standar
         function getDivisionFromDept(deptStr) {
             if (!deptStr) return 'UNKNOWN';
             let code = parseInt(String(deptStr).split(' ')[0], 10);
@@ -486,7 +479,6 @@
                         }
                     });
                 } else if (dateColKeys.includes('bulan')) {
-                    // Cek bentuk Matrix Budget
                     const keys = Object.keys(sample);
                     const cDateCol = keys.find(k => ['date','tanggal','bulan'].includes(k.replace(/^\uFEFF/, '').toLowerCase().trim()));
                     if(cDateCol) {
@@ -991,7 +983,6 @@
             }
         }
 
-        // PERBAIKAN: Tombol Reset akan menghapus SEMUA Data di versi 8
         document.getElementById('btnConfirmReset').onclick = async () => {
             const colRef = getCloudRef();
             const snap = await getDocs(query(colRef));
@@ -1000,7 +991,7 @@
             location.reload();
         };
 
-        // Modal Grouping by SKU
+        // Modal Grouping by SKU untuk Sales
         document.getElementById('btnBreakdownSales').onclick = () => {
             const m = {}; let t = 0; 
             filteredData.forEach(x => { 
@@ -1018,6 +1009,7 @@
             document.getElementById('salesModal').classList.remove('hidden');
         };
 
+        // Modal Grouping by SKU untuk Disposal
         document.getElementById('btnBreakdownDisposal').onclick = () => {
             const m = {}; let t = 0; 
             filteredData.forEach(x => { 
@@ -1053,6 +1045,44 @@
             
             document.getElementById('disposalTotalLabel').innerText = formatCurrency(t); 
             document.getElementById('disposalModal').classList.remove('hidden');
+        };
+
+        // Modal Grouping by SKU untuk Discount (FITUR BARU)
+        document.getElementById('btnBreakdownDiscount').onclick = () => {
+            const m = {}; let t = 0; 
+            filteredData.forEach(x => { 
+                t += x.discount; 
+                let key = x.sku || x.itemDesc || 'TANPA NAMA';
+                
+                if (!m[key]) m[key] = { label: x.itemDesc || key, sales: 0, discount: 0 };
+                m[key].sales += x.sales;
+                m[key].discount += x.discount;
+
+                if((x.itemDesc || '').length > m[key].label.length) m[key].label = x.itemDesc;
+            });
+            
+            const s = Object.values(m)
+                .filter(entry => entry.discount > 0)
+                .sort((a,b)=>b.discount - a.discount)
+                .slice(0,10);
+
+            document.getElementById('discountBreakdownBody').innerHTML = s.map((v, i) => {
+                const discToSalesPct = v.sales > 0 ? (v.discount / v.sales * 100).toFixed(1) + '%' : 'N/A';
+                
+                return `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-4 py-3 text-center">${i+1}</td>
+                        <td class="px-4 py-3 font-bold">${v.label}</td>
+                        <td class="px-4 py-3 text-right font-medium text-slate-600">${formatCurrency(v.sales, '')}</td>
+                        <td class="px-4 py-3 text-right text-amber-600 font-bold">${formatCurrency(v.discount, '')}</td>
+                        <td class="px-4 py-3 text-right font-bold text-blue-500">${discToSalesPct}</td>
+                        <td class="px-4 py-3 text-right font-medium">${t ? (v.discount/t*100).toFixed(1) : 0}%</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            document.getElementById('discountTotalLabel').innerText = formatCurrency(t); 
+            document.getElementById('discountModal').classList.remove('hidden');
         };
 
         document.getElementById('btnOpenReset').onclick = () => document.getElementById('resetModal').classList.remove('hidden');
