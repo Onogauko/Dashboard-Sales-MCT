@@ -70,7 +70,7 @@
             <div class="flex flex-wrap items-center gap-2">
                 <div class="flex bg-slate-800 rounded-md p-1 gap-1 border border-slate-700 items-center shadow-inner">
                     <input type="file" id="fileSales" accept=".csv" class="hidden">
-                    <label id="lblSales" for="fileSales" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5" title="Unggah Sales (Format Fuji)">
+                    <label id="lblSales" for="fileSales" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5" title="Unggah Sales (Format Fuji Terkompres)">
                         <i data-lucide="upload" class="w-3.5 h-3.5"></i> <span>Sales</span>
                     </label>
 
@@ -80,12 +80,12 @@
                     </label>
 
                     <input type="file" id="fileDisposal" accept=".csv" class="hidden">
-                    <label id="lblDisposal" for="fileDisposal" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5">
+                    <label id="lblDisposal" for="fileDisposal" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5" title="Unggah Data Disposal">
                         <i data-lucide="upload" class="w-3.5 h-3.5"></i> <span>Disposal</span>
                     </label>
 
                     <input type="file" id="fileDiscount" accept=".csv" class="hidden">
-                    <label id="lblDiscount" for="fileDiscount" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5">
+                    <label id="lblDiscount" for="fileDiscount" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5" title="Unggah Data Discount (Disc WO VAT)">
                         <i data-lucide="upload" class="w-3.5 h-3.5"></i> <span>Discount</span>
                     </label>
                 </div>
@@ -99,7 +99,7 @@
                 </button>
             </div>
         </div>
-        <div id="uploadStatus" class="hidden text-xs text-center py-1.5 font-bold tracking-wide text-white shadow-md bg-blue-600"></div>
+        <div id="uploadStatus" class="hidden text-sm text-center py-2 font-bold tracking-wide text-white shadow-md transition-colors duration-300 bg-blue-600"></div>
     </nav>
 
     <!-- Main Workspace -->
@@ -233,7 +233,6 @@
         };
         // ======================================================================
 
-        // Menggunakan versi DB baru (_v5) agar bersih
         const appId = 'retail-dashboard-toko';
         let db = null;
         
@@ -262,7 +261,7 @@
         const dashboardWorkspace = document.getElementById('dashboardWorkspace');
 
         function getCloudRef() {
-            return collection(db, 'artifacts', appId, 'public', 'data', 'retail_monthly_v5');
+            return collection(db, 'artifacts', appId, 'public', 'data', 'retail_monthly_v7');
         }
 
         async function loadFromCloud() {
@@ -277,7 +276,7 @@
                 
                 if(all.length > 0) { 
                     masterData = all; 
-                    cloudIndicatorTxt.innerText = `Tersinkron (${all.length} baris)`; 
+                    cloudIndicatorTxt.innerText = `Tersinkron (${all.length.toLocaleString('id-ID')} baris)`; 
                     document.getElementById('cloudIndicator').classList.replace('text-slate-300', 'text-emerald-400'); 
                     initDashboard(); 
                 } else {
@@ -289,9 +288,6 @@
             }
         }
 
-        // =======================================================
-        // PERBAIKAN: Sistem Antrean Upload (Mencegah Macet di Cloud)
-        // =======================================================
         async function saveToCloud() {
             if(!db) return;
             try {
@@ -300,39 +296,48 @@
                 
                 const colRef = getCloudRef();
                 
-                // 1. Bersihkan cloud lama
-                cloudIndicatorTxt.innerText = 'Menyiapkan Cloud...';
+                uploadStatus.innerHTML = `Mempersiapkan Laci Cloud Baru... Mohon tunggu (0%)`;
                 const snap = await getDocs(query(colRef));
                 const delPs = [];
                 snap.forEach(d => delPs.push(deleteDoc(d.ref)));
                 await Promise.all(delPs);
 
-                // 2. Upload secara berurutan (Sequential) per 1000 baris
-                const chunkSize = 1000;
-                const totalChunks = Math.ceil(masterData.length / chunkSize);
-                
+                // Potong data menjadi per 2000 baris agar optimal
+                const chunkSize = 2000;
+                const chunks = [];
                 for(let i=0; i < masterData.length; i += chunkSize) {
-                    const chunk = masterData.slice(i, i + chunkSize);
-                    const chunkNumber = Math.floor(i/chunkSize) + 1;
-                    
-                    // Update teks persentase di layar
-                    cloudIndicatorTxt.innerText = `Menyimpan: ${chunkNumber} / ${totalChunks}`;
-                    
-                    // AWAIT: Tunggu paket ini selesai disimpan baru lanjut ke paket berikutnya
-                    await setDoc(doc(colRef, `chunk_${i}`), { data: JSON.stringify(chunk), updatedAt: new Date().toISOString() });
+                    chunks.push({ id: `chunk_${i}`, data: JSON.stringify(masterData.slice(i, i + chunkSize)) });
                 }
                 
+                // Kirim 10 Paket data secara serentak, tunggu, lalu kirim 10 Paket berikutnya
+                const batchSize = 10;
+                for (let i = 0; i < chunks.length; i += batchSize) {
+                    const batch = chunks.slice(i, i + batchSize);
+                    const pct = Math.round(((i + batch.length) / chunks.length) * 100);
+                    
+                    uploadStatus.innerHTML = `<i data-lucide="cloud-upload" class="inline w-5 h-5 mr-1 align-text-bottom"></i> Menyinkronkan Data: <b>${pct}% Selesai</b><br><span class="text-xs font-normal opacity-90">Jangan tutup tab ini sebelum muncul warna hijau...</span>`;
+                    lucide.createIcons();
+                    
+                    await Promise.all(batch.map(c => setDoc(doc(colRef, c.id), { data: c.data, updatedAt: new Date().toISOString() })));
+                }
+                
+                // Sukses Total
                 cloudIndicatorTxt.innerText = `Berhasil Tersimpan!`;
                 document.getElementById('cloudIndicator').classList.replace('text-amber-400', 'text-emerald-400');
+                uploadStatus.className = "text-sm text-center py-2 font-bold tracking-wide text-white shadow-md transition-colors duration-300 bg-emerald-500";
+                uploadStatus.innerHTML = `✅ BERHASIL TERSIMPAN (${masterData.length.toLocaleString('id-ID')} baris)`;
+                
+                setTimeout(() => uploadStatus.classList.add('hidden'), 5000);
+
             } catch(e) { 
                 console.error("Gagal simpan ke cloud:", e); 
                 cloudIndicatorTxt.innerText = 'Gagal Menyimpan (DB Error)'; 
+                uploadStatus.className = "text-sm text-center py-2 font-bold tracking-wide text-white shadow-md transition-colors duration-300 bg-red-500";
+                uploadStatus.innerHTML = `❌ Gagal mengirim ke Cloud. Koneksi terputus.`;
             }
         }
 
-        // ==========================================
-        // KAMUS DEPARTEMEN & DIVISI LENGKAP
-        // ==========================================
+        // Kamus Standar
         function getDivisionFromDept(deptStr) {
             if (!deptStr) return 'UNKNOWN';
             let code = parseInt(String(deptStr).split(' ')[0], 10);
@@ -406,10 +411,7 @@
                 else if(parts[0].length === 4) { y=parseInt(parts[0]); m=parseInt(parts[1])-1; d=parseInt(parts[2]); }
                 else { d=parseInt(parts[0]); m=parseInt(parts[1])-1; y=2000+parseInt(parts[2]); }
                 
-                if(isNaN(m)) {
-                   let lookup = String(parts[1]).toLowerCase().substring(0,3);
-                   m = mMap[lookup];
-                }
+                if(isNaN(m)) m = mMap[String(parts[1]).toLowerCase().substring(0,3)];
                 return new Date(y, m, d);
             }
             return new Date(raw);
@@ -417,9 +419,20 @@
 
         const getMonthKey = s => { const d = parseDateString(s); return isNaN(d) ? 'Unknown' : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`; };
         
+        // =======================================================
+        // PERBAIKAN: Fungsi Pembaca Kolom Paling Akurat (Exact Match Prioritized)
+        // =======================================================
         function getColAccessor(firstRow, keysToFind, excludeKeys=[]) {
             if(!firstRow) return null;
             const rK = Object.keys(firstRow);
+            
+            // 1. Coba cari nama kolom yang SAMA PERSIS terlebih dahulu
+            for(let k of keysToFind) {
+                const match = rK.find(x => x.replace(/^\uFEFF/, '').trim().toLowerCase() === k.toLowerCase());
+                if(match) return match;
+            }
+            
+            // 2. Jika tidak ada yang sama persis, baru cari yang MENGANDUNG kata tersebut
             for(let k of keysToFind) {
                 const match = rK.find(x => {
                     let cx = x.replace(/^\uFEFF/, '').toLowerCase().trim();
@@ -459,8 +472,10 @@
             if(total === 0) return;
             
             btnProcess.disabled = true; 
-            txtProcess.innerText = "Memproses Data...";
-            uploadStatus.innerHTML = "Memproses File CSV di Memori Lokal...";
+            txtProcess.innerText = "Memproses...";
+            
+            uploadStatus.className = "text-sm text-center py-2.5 font-bold tracking-wide text-white shadow-md transition-colors duration-300 bg-blue-600 animate-pulse";
+            uploadStatus.innerHTML = "Memproses File CSV (Merangkum Data)...";
             uploadStatus.classList.remove('hidden');
             
             Object.entries(files).forEach(([key, id]) => {
@@ -483,8 +498,19 @@
         function executeDataMergeFast() {
             try {
                 const map = new Map();
-                // Hapus data lama agar tidak dobel
-                masterData = []; 
+                
+                // =======================================================
+                // SMART MERGE LOGIC
+                // Muat data lama dari Cloud, JANGAN DIHAPUS KOSONG.
+                // Jika user HANYA mengunggah file Fuji (Sales), maka HANYA
+                // metrik Sales-nya saja yang ditimpa, Disposal & Budget TETAP AMAN.
+                // =======================================================
+                masterData.forEach(r => map.set(`${r.date}|${r.division}|${r.deptCode||''}|${r.sku||''}`, {...r})); 
+
+                if (rawDataStore.sales && rawDataStore.sales.length > 0) map.forEach(v => { v.sales = 0; v.cost = 0; });
+                if (rawDataStore.budget && rawDataStore.budget.length > 0) map.forEach(v => v.budget = 0);
+                if (rawDataStore.disposal && rawDataStore.disposal.length > 0) map.forEach(v => v.disposal = 0);
+                if (rawDataStore.discount && rawDataStore.discount.length > 0) map.forEach(v => v.discount = 0);
 
                 const tsCache = {}, mkCache = {}, divCache = {};
                 const getTs = d => { if(!tsCache[d]) tsCache[d] = parseDateString(d).getTime(); return tsCache[d]; };
@@ -499,11 +525,12 @@
 
                 if(rawDataStore.sales && rawDataStore.sales.length > 0) {
                     const sample = rawDataStore.sales[0];
-                    const cDate = getColAccessor(sample, ['Adjustment Date', 'Date', 'Tanggal']);
-                    const cDept = getColAccessor(sample, ['Department','Divisi'], ['desc','name']);
+                    const cDate = getColAccessor(sample, ['Sales Date', 'Adjustment Date', 'Date', 'Tanggal']);
+                    const cDept = getColAccessor(sample, ['Department', 'Dept', 'Divisi', 'Division'], ['desc','name']);
                     const cSku = getColAccessor(sample, ['Short SKU','Item','SKU','Kode Item','Item Code'], ['name','desc']); 
-                    const cItem = getColAccessor(sample, ['Item Desc','Item Name','Deskripsi','Nama Item']);
-                    const cAmt = getColAccessor(sample, ['Sales Amount','Amount'], ['qty','cost','budget']);
+                    const cItem = getColAccessor(sample, ['SKU Desc', 'Item Desc','Item Name','Deskripsi','Nama Item']);
+                    // Cek 'Sales WO VAT' agar data file ringan bisa terbaca dengan sempurna
+                    const cAmt = getColAccessor(sample, ['Sales WO VAT', 'Sales Amount', 'Net Sales', 'Amount'], ['qty','cost','budget','disposal','discount']);
                     const cCost = getColAccessor(sample, ['Sales Cost','Cost'], ['qty','amount']);
 
                     for(let i=0; i<rawDataStore.sales.length; i++) {
@@ -578,11 +605,17 @@
                 ['disposal','discount'].forEach(type => {
                     if(rawDataStore[type] && rawDataStore[type].length > 0) {
                         const sample = rawDataStore[type][0];
-                        const cDate = getColAccessor(sample, ['Adjustment Date', 'Date', 'Tanggal']);
+                        const cDate = getColAccessor(sample, ['Sales Date', 'Adjustment Date', 'Date', 'Tanggal']);
                         const cDept = getColAccessor(sample, ['Department', 'Dept', 'Divisi', 'Division'], ['desc', 'name']);
                         const cSku = getColAccessor(sample, ['Short SKU', 'Item', 'SKU', 'Kode Item', 'Item Code'], ['name', 'desc']);
-                        const cItem = getColAccessor(sample, ['Item Desc', 'Item Name', 'Deskripsi', 'Nama Item']);
-                        const cVal = getColAccessor(sample, [type.charAt(0).toUpperCase() + type.slice(1), 'Amount']);
+                        const cItem = getColAccessor(sample, ['SKU Desc', 'Item Desc', 'Item Name', 'Deskripsi', 'Nama Item']);
+                        
+                        let valKeys = [];
+                        if (type === 'disposal') valKeys = ['Disposal', 'Amount'];
+                        // Cek 'Disc WO VAT' agar data file ringan bisa terbaca dengan sempurna
+                        if (type === 'discount') valKeys = ['Disc WO VAT', 'Discount', 'Disc', 'Amount'];
+
+                        const cVal = getColAccessor(sample, valKeys);
 
                         for(let i=0; i<rawDataStore[type].length; i++) {
                             const row = rawDataStore[type][i];
@@ -597,13 +630,14 @@
                             let itemKey = cleanSku || item || 'UNKNOWN';
                             let itemDesc = sku && item ? `${sku} - ${item}` : (item || sku || '');
 
-                            const k = type === 'discount' ? `${d}|${div}|${deptStr}|` : `${d}|${div}|${deptStr}|${itemKey}`;
+                            // PERBAIKAN: Discount sekarang juga mengikat ke Level SKU!
+                            const k = `${d}|${div}|${deptStr}|${itemKey}`;
                             let e = map.get(k);
                             if(!e) {
-                                e = { date:d, timestamp:getTs(d), monthKey:getMK(d), division:div, deptCode:deptStr, itemDesc: type==='disposal'?itemDesc:'', sku: type==='disposal'?itemKey:'', sales:0, cost:0, budget:0, disposal:0, discount:0 };
+                                e = { date:d, timestamp:getTs(d), monthKey:getMK(d), division:div, deptCode:deptStr, itemDesc: itemDesc, sku: itemKey, sales:0, cost:0, budget:0, disposal:0, discount:0 };
                                 map.set(k, e);
                             } else {
-                                if (type === 'disposal' && itemDesc.length > (e.itemDesc || '').length) e.itemDesc = itemDesc;
+                                if (itemDesc.length > (e.itemDesc || '').length) e.itemDesc = itemDesc;
                             }
                             if(cVal) e[type] += parseNumber(row[cVal]);
                         }
@@ -613,20 +647,20 @@
                 masterData = Array.from(map.values());
                 rawDataStore = { sales: [], budget: [], disposal: [], discount: [] };
                 
-                // Segera tampilkan dashboard terlebih dahulu
+                // Segera tampilkan dashboard yang baru dirangkum
                 initDashboard(); 
                 
-                // Lalu mulai upload berurutan ke Cloud
+                // Lalu mulai upload aman ke Cloud (jangan buka perlindungan tombol proses dulu)
                 saveToCloud().then(() => { 
                     txtProcess.innerText = "Proses Data"; 
                     btnProcess.disabled = false;
-                    uploadStatus.classList.add('hidden');
                 });
 
             } catch (err) {
                 txtProcess.innerText = "Proses Data"; 
                 btnProcess.disabled = false;
-                uploadStatus.innerHTML = "<div class='bg-red-500 py-1.5 font-bold'>❌ Error: Format CSV tidak sesuai.</div>";
+                uploadStatus.className = "text-sm text-center py-2 font-bold tracking-wide text-white shadow-md transition-colors duration-300 bg-red-500";
+                uploadStatus.innerHTML = `❌ Error: Format CSV tidak sesuai.`;
                 setTimeout(() => uploadStatus.classList.add('hidden'), 5000);
             }
         }
@@ -876,7 +910,7 @@
             location.reload();
         };
 
-        // FIX MODAL: Group by SKU exact match
+        // Modal Grouping by SKU
         document.getElementById('btnBreakdownSales').onclick = () => {
             const m = {}; let t = 0; 
             filteredData.forEach(x => { 
