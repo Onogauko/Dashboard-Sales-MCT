@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retail Analytics Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js & DataLabels Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    
+    <!-- PapaParse for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0f172a', secondary: '#334155', accent: '#3b82f6',
+                        success: '#10b981', warning: '#f59e0b', danger: '#ef4444',
+                        background: '#f1f5f9', surface: '#ffffff',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; overflow-x: hidden; }
+        .glass-panel { background: white; border: 1px solid #e2e8f0; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); }
+        .card-hover { transition: all 0.2s ease; }
+        .card-hover:hover { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .sort-icon { display: inline-block; width: 0; height: 0; margin-left: 4px; vertical-align: middle; border-right: 3px solid transparent; border-left: 3px solid transparent; }
+        .sort-asc { border-bottom: 3px solid #64748b; border-top: none; }
+        .sort-desc { border-top: 3px solid #64748b; border-bottom: none; }
+        th { cursor: pointer; user-select: none; }
+        th:hover { background-color: #f8fafc; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .chart-container { position: relative; height: 250px; width: 100%; margin-top: 8px; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Compact Navbar & Upload Section -->
+    <nav class="bg-primary text-white shadow-md z-50 shrink-0 sticky top-0">
+        <div class="px-4 py-2 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="bar-chart-3" class="w-6 h-6 text-accent"></i>
+                    <span class="font-bold text-xl tracking-tight">Retail<span class="text-accent">Dash</span></span>
+                </div>
+                <div id="cloudIndicator" class="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1 rounded-full text-xs font-medium text-slate-300 border border-slate-700">
+                    <i data-lucide="cloud" class="w-3.5 h-3.5"></i> <span id="cloudIndicatorTxt">Memeriksa Cloud...</span>
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-2">
+                <div class="flex bg-slate-800 rounded-md p-1 gap-1 border border-slate-700 items-center shadow-inner">
+                    <input type="file" id="fileSales" accept=".csv" class="hidden">
+                    <label id="lblSales" for="fileSales" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5" title="Unggah Sales (Format Fuji)">
+                        <i data-lucide="upload" class="w-3.5 h-3.5"></i> <span>Sales</span>
+                    </label>
+
+                    <input type="file" id="fileBudget" accept=".csv" class="hidden">
+                    <label id="lblBudget" for="fileBudget" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5" title="Unggah Budget (Bisa Divisi/Departemen)">
+                        <i data-lucide="upload" class="w-3.5 h-3.5"></i> <span>Budget</span>
+                    </label>
+
+                    <input type="file" id="fileDisposal" accept=".csv" class="hidden">
+                    <label id="lblDisposal" for="fileDisposal" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5">
+                        <i data-lucide="upload" class="w-3.5 h-3.5"></i> <span>Disposal</span>
+                    </label>
+
+                    <input type="file" id="fileDiscount" accept=".csv" class="hidden">
+                    <label id="lblDiscount" for="fileDiscount" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5">
+                        <i data-lucide="upload" class="w-3.5 h-3.5"></i> <span>Discount</span>
+                    </label>
+                </div>
+
+                <button id="btnProcess" disabled class="bg-accent hover:bg-blue-600 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-1.5 rounded-md text-sm font-semibold transition flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="play" class="w-4 h-4"></i> <span id="txtProcess">Proses Data</span>
+                </button>
+                <div class="w-px h-5 bg-slate-600 mx-1"></div>
+                <button id="btnOpenReset" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-md text-sm transition flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i> Reset
+                </button>
+            </div>
+        </div>
+        <div id="uploadStatus" class="hidden text-xs text-center py-1.5 font-bold tracking-wide text-white shadow-md"></div>
+    </nav>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 p-4">
+        <div id="dashboardWorkspace" class="hidden max-w-[1600px] mx-auto space-y-4 animate-fade-in pb-8">
+            
+            <!-- Filters -->
+            <section class="flex flex-col xl:flex-row gap-4">
+                <div class="glass-panel p-2.5 flex flex-wrap items-center gap-2 shrink-0 bg-white shadow-sm">
+                    <i data-lucide="filter" class="w-4 h-4 text-slate-400 ml-1"></i>
+                    <select id="filterMonth" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded outline-none focus:ring-1 focus:ring-accent px-2 py-1.5 font-medium cursor-pointer min-w-[130px]">
+                        <option value="ALL">Semua Bulan</option>
+                    </select>
+                    <div class="w-px h-4 bg-slate-200"></div>
+                    <select id="filterDivision" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded outline-none focus:ring-1 focus:ring-accent px-2 py-1.5 font-medium cursor-pointer min-w-[140px]">
+                        <option value="ALL">Semua Divisi</option>
+                    </select>
+                    <div class="w-px h-4 bg-slate-200"></div>
+                    <select id="filterDepartment" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded outline-none focus:ring-1 focus:ring-accent px-2 py-1.5 font-medium cursor-pointer min-w-[160px]">
+                        <option value="ALL">Semua Departemen</option>
+                    </select>
+                </div>
+
+                <div class="glass-panel p-2 flex-1 bg-gradient-to-r from-slate-50 to-white flex items-center justify-around divide-x divide-slate-200 shadow-sm text-center">
+                    <div class="px-4 w-full"><p class="text-[10px] text-slate-400 uppercase font-bold tracking-tight">Top Sales Unit</p><p id="insightTopSales" class="text-xs font-bold text-slate-800">-</p></div>
+                    <div class="px-4 w-full"><p class="text-[10px] text-slate-400 uppercase font-bold tracking-tight">Max Disposal Unit</p><p id="insightTopDisposal" class="text-xs font-bold text-slate-800">-</p></div>
+                    <div class="px-4 w-full"><p class="text-[10px] text-slate-400 uppercase font-bold tracking-tight">Low Target</p><p id="insightLowAch" class="text-xs font-bold text-slate-800">-</p></div>
+                </div>
+            </section>
+
+            <!-- KPIs -->
+            <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="glass-panel card-hover p-4 border-l-4 border-l-accent flex flex-col justify-between shadow-sm bg-white h-full relative">
+                    <div class="flex justify-between items-start mb-2">
+                        <div><p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Sales Store</p><h3 id="kpiTotalSales" class="text-2xl font-black text-slate-800 leading-tight">Rp 0</h3></div>
+                        <div class="p-3 bg-blue-50 rounded-lg text-accent"><i data-lucide="shopping-cart" class="w-6 h-6"></i></div>
+                    </div>
+                    <div class="flex items-center justify-between text-xs mt-auto w-full">
+                        <div><span id="kpiAchievement" class="font-bold text-slate-400 text-sm">0%</span><span class="text-slate-400 ml-1.5 font-medium">vs Budget (<span id="kpiBudget">0</span>)</span></div>
+                        <button id="btnBreakdownSales" class="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 px-2.5 py-1.5 rounded transition font-bold text-[10px] uppercase tracking-wide border border-blue-100"><i data-lucide="list" class="w-3.5 h-3.5"></i> Top 10 Item</button>
+                    </div>
+                </div>
+                
+                <div class="glass-panel card-hover p-4 border-l-4 border-l-danger flex flex-col justify-between shadow-sm bg-white h-full relative">
+                    <div class="flex justify-between items-start mb-2">
+                        <div><div class="flex items-center gap-2 mb-1"><p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Disposal</p><span id="kpiDisposalDate" class="bg-slate-100 text-slate-500 text-[10px] px-1.5 py-0.5 rounded font-medium border border-slate-200">Sampai: -</span></div><h3 id="kpiTotalDisposal" class="text-2xl font-black text-slate-800 leading-tight">Rp 0</h3></div>
+                        <div class="p-3 bg-red-50 rounded-lg text-danger"><i data-lucide="trash-2" class="w-6 h-6"></i></div>
+                    </div>
+                    <div class="flex items-center justify-between text-xs mt-auto w-full">
+                        <div><span id="kpiDisposalPct" class="font-bold text-danger text-sm">0%</span><span class="text-slate-400 ml-1.5 font-medium">dari Sales</span></div>
+                        <button id="btnBreakdownDisposal" class="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1.5 rounded transition font-bold text-[10px] uppercase tracking-wide border border-red-100"><i data-lucide="list" class="w-3.5 h-3.5"></i> Top 10 Item</button>
+                    </div>
+                </div>
+
+                <div class="glass-panel card-hover p-4 border-l-4 border-l-warning flex flex-col justify-between shadow-sm bg-white h-full">
+                    <div class="flex justify-between items-start mb-2">
+                        <div><p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Discount</p><h3 id="kpiTotalDiscount" class="text-2xl font-black text-slate-800 leading-tight">Rp 0</h3></div>
+                        <div class="p-3 bg-amber-50 rounded-lg text-warning"><i data-lucide="tag" class="w-6 h-6"></i></div>
+                    </div>
+                    <div class="text-xs mt-auto"><span id="kpiDiscountPct" class="font-bold text-warning text-sm">0%</span><span class="text-slate-400 ml-1.5 font-medium">dari Sales</span></div>
+                </div>
+            </section>
+
+            <!-- Area Grafik Atas -->
+            <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div class="glass-panel p-4 flex flex-col bg-white shadow-sm"><h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center"><i data-lucide="line-chart" class="w-4 h-4 mr-2 text-blue-500"></i> Trend Sales</h3><div class="chart-container"><canvas id="chartTrendSales"></canvas></div></div>
+                <div class="glass-panel p-4 flex flex-col bg-white shadow-sm"><h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center"><i data-lucide="target" class="w-4 h-4 mr-2 text-emerald-500"></i> Sales vs Budget</h3><div class="chart-container"><canvas id="chartSalesBudget"></canvas></div></div>
+                <div class="glass-panel p-4 flex flex-col bg-white shadow-sm"><h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center"><i data-lucide="pie-chart" class="w-4 h-4 mr-2 text-indigo-500"></i> Kontribusi Per Unit</h3><div class="chart-container flex justify-center"><canvas id="chartSalesContrib"></canvas></div></div>
+            </section>
+
+            <!-- Area Grafik Bawah -->
+            <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div class="glass-panel p-4 flex flex-col bg-white shadow-sm"><h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center"><i data-lucide="bar-chart-2" class="w-4 h-4 mr-2 text-blue-500"></i> Sales per Unit</h3><div class="chart-container"><canvas id="chartSalesDiv"></canvas></div></div>
+                <div class="glass-panel p-4 flex flex-col bg-white shadow-sm"><h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center"><i data-lucide="trash-2" class="w-4 h-4 mr-2 text-red-500"></i> Disposal per Unit</h3><div class="chart-container"><canvas id="chartDisposalDiv"></canvas></div></div>
+                <div class="glass-panel p-4 flex flex-col bg-white shadow-sm"><h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center"><i data-lucide="tag" class="w-4 h-4 mr-2 text-orange-500"></i> Discount per Unit</h3><div class="chart-container"><canvas id="chartDiscountDiv"></canvas></div></div>
+            </section>
+
+            <!-- Area Tabel & Peringkat -->
+            <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div class="glass-panel flex flex-col lg:col-span-1 border-t-4 border-t-yellow-400 bg-white shadow-sm overflow-hidden">
+                    <div class="p-3 bg-slate-50 border-b border-slate-100 flex items-center gap-2"><i data-lucide="trophy" class="w-5 h-5 text-yellow-500"></i><h3 class="text-sm font-bold text-slate-700">Ranking Performa</h3></div>
+                    <div class="overflow-y-auto max-h-80">
+                        <table class="w-full text-xs text-left text-slate-600">
+                            <thead class="text-[10px] text-slate-500 uppercase bg-white sticky top-0 shadow-sm z-10">
+                                <tr>
+                                    <th class="px-3 py-2.5 text-center w-10">Rnk</th>
+                                    <th class="px-3 py-2.5">Unit</th>
+                                    <th class="px-3 py-2.5 text-right text-blue-600">Sales</th>
+                                    <th class="px-3 py-2.5 text-right">Achiev.</th>
+                                    <th class="px-3 py-2.5 text-right">Disp %</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rankingTableBody" class="divide-y divide-slate-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="glass-panel flex flex-col lg:col-span-2 border-t-4 border-t-blue-500 bg-white shadow-sm overflow-hidden">
+                    <div class="p-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center"><div class="flex items-center gap-2"><i data-lucide="list" class="w-5 h-5 text-blue-500"></i><h3 class="text-sm font-bold text-slate-700">Detail Transaksi</h3></div><span class="text-[11px] font-medium text-slate-500 bg-white px-2.5 py-1 rounded border shadow-sm" id="tableRowCount">0 baris</span></div>
+                    <div class="overflow-y-auto max-h-80"><table class="w-full text-xs text-left text-slate-600 whitespace-nowrap"><thead class="text-[10px] text-slate-500 uppercase bg-white sticky top-0 shadow-sm z-10"><tr><th class="px-4 py-2.5 cursor-pointer hover:bg-slate-100" data-sort="date">Tanggal <span class="sort-icon"></span></th><th class="px-4 py-2.5 cursor-pointer hover:bg-slate-100" data-sort="division">Divisi <span class="sort-icon"></span></th><th class="px-4 py-2.5 cursor-pointer hover:bg-slate-100" data-sort="deptCode">Departemen <span class="sort-icon"></span></th><th class="px-4 py-2.5 cursor-pointer hover:bg-slate-100" data-sort="itemDesc">Item Detail <span class="sort-icon"></span></th><th class="px-4 py-2.5 text-right cursor-pointer hover:bg-slate-100" data-sort="sales">Sales <span class="sort-icon"></span></th><th class="px-4 py-2.5 text-right cursor-pointer hover:bg-slate-100" data-sort="budget">Budget <span class="sort-icon"></span></th><th class="px-4 py-2.5 text-right cursor-pointer hover:bg-slate-100" data-sort="disposal">Disposal <span class="sort-icon"></span></th><th class="px-4 py-2.5 text-right cursor-pointer hover:bg-slate-100" data-sort="discount">Discount <span class="sort-icon"></span></th></tr></thead><tbody id="tableBody" class="divide-y divide-slate-50"></tbody></table></div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Jendela Modal (Popups) -->
+    <div id="salesModal" class="hidden fixed inset-0 bg-slate-900/60 z-[60] flex items-center justify-center backdrop-blur-sm p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"><div class="p-5 bg-blue-50 border-b border-blue-100 flex justify-between items-center"><div><h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i data-lucide="award" class="w-5 h-5 text-blue-500"></i> Top 10 Item Sales</h3><p id="salesModalSubtitle" class="text-xs text-slate-500 mt-1"></p></div><button onclick="document.getElementById('salesModal').classList.add('hidden')" class="p-2 text-slate-400 hover:bg-slate-100 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="overflow-y-auto flex-1"><table class="w-full text-sm text-left"><thead class="text-xs text-slate-500 uppercase bg-slate-50 sticky top-0"><tr><th class="px-4 py-3 text-center w-12">#</th><th class="px-4 py-3">Deskripsi SKU / Item</th><th class="px-4 py-3 text-right">Nilai Sales</th><th class="px-4 py-3 text-right w-24">% Kontrib</th></tr></thead><tbody id="salesBreakdownBody" class="divide-y"></tbody></table></div><div class="p-4 bg-slate-50 border-t flex justify-between items-center"><span class="text-sm font-bold">Total (Terfilter):</span><span id="salesTotalLabel" class="text-lg font-bold text-blue-600">Rp 0</span></div></div></div>
+    
+    <div id="disposalModal" class="hidden fixed inset-0 bg-slate-900/60 z-[60] flex items-center justify-center backdrop-blur-sm p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]"><div class="p-5 bg-red-50 border-b border-red-100 flex justify-between items-center"><div><h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i data-lucide="trash-2" class="w-5 h-5 text-red-500"></i> Top 10 Item Disposal</h3><p id="disposalModalSubtitle" class="text-xs text-slate-500 mt-1"></p></div><button onclick="document.getElementById('disposalModal').classList.add('hidden')" class="p-2 text-slate-400 hover:bg-slate-100 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="overflow-y-auto flex-1"><table class="w-full text-sm text-left"><thead class="text-xs text-slate-500 uppercase bg-slate-50 sticky top-0"><tr><th class="px-4 py-3 text-center w-12">#</th><th class="px-4 py-3">Deskripsi SKU / Item</th><th class="px-4 py-3 text-right">Nilai Sales</th><th class="px-4 py-3 text-right">Nilai Disposal</th><th class="px-4 py-3 text-right" title="Persentase Disposal terhadap Sales item ini">% Disp/Sales</th><th class="px-4 py-3 text-right w-24">% Kontrib</th></tr></thead><tbody id="disposalBreakdownBody" class="divide-y"></tbody></table></div><div class="p-4 bg-slate-50 border-t flex justify-between items-center"><span class="text-sm font-bold">Total (Terfilter):</span><span id="disposalTotalLabel" class="text-lg font-bold text-red-600">Rp 0</span></div></div></div>
+    
+    <div id="resetModal" class="hidden fixed inset-0 bg-slate-900/60 z-[60] flex items-center justify-center backdrop-blur-sm p-4"><div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl"><div class="flex items-center gap-3 mb-3"><div class="p-2 bg-red-100 text-red-600 rounded-full"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div><h3 class="text-lg font-bold">Hapus Seluruh Data?</h3></div><p class="text-sm text-slate-600 mb-6">Data di Dashboard dan di Cloud Database akan dihapus seluruhnya secara permanen.</p><div class="flex justify-end gap-3"><button onclick="document.getElementById('resetModal').classList.add('hidden')" class="px-4 py-2 bg-slate-100 rounded-lg text-sm font-medium">Batal</button><button id="btnConfirmReset" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-bold">Ya, Bersihkan</button></div></div></div>
+
+    <!-- Mesin JavaScript -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        lucide.createIcons();
+        if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
+
+        // ======================================================================
+        // 🌟 PASTE KODE FIREBASE ANDA DI BAWAH INI:
+        // ======================================================================
+
+        const myFirebaseConfig = {
+            apiKey: "AIzaSyAulLwce6oWuyHd74IgJii1cTEiVmxVwQk",
+            authDomain: "dashboard-sales-mct.firebaseapp.com",
+            projectId: "dashboard-sales-mct",
+            storageBucket: "dashboard-sales-mct.firebasestorage.app",
+            messagingSenderId: "772083832698",
+            appId: "1:772083832698:web:f48bc1201e471faf2d28c3",
+            measurementId: "G-S7GEBY1EWV"
+        };
+
+        // ======================================================================
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'retail-dashboard-toko';
+        const firebaseConfig = myFirebaseConfig || (typeof __firebase_config !== 'undefined' && __firebase_config ? JSON.parse(__firebase_config) : null);
+        let db = null, authUser = null;
+
+        if (firebaseConfig) {
+            try {
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                db = getFirestore(app);
+                onAuthStateChanged(auth, u => { if(u) { authUser=u; loadFromCloud(); } });
+                (async () => {
+                    try {
+                        if(typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+                        else await signInAnonymously(auth);
+                    } catch(e) { console.warn("Sistem berjalan lokal."); }
+                })();
+            } catch (e) { console.warn("Firebase gagal diinisialisasi."); }
+        } else {
+            console.warn("Harap masukkan appId Firebase Anda agar fitur Cloud berfungsi.");
+        }
+
+        let masterData = [], filteredData = [];
+        let rawDataStore = { sales: [], budget: [], disposal: [], discount: [] };
+        const charts = {};
+        let currentSort = { column: 'date', direction: 'asc' };
+
+        const btnProcess = document.getElementById('btnProcess');
+        const txtProcess = document.getElementById('txtProcess');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const dashboardWorkspace = document.getElementById('dashboardWorkspace');
+        const cloudIndicatorTxt = document.getElementById('cloudIndicatorTxt');
+
+        // Menggunakan jalur "Public" agar semua rekan satu tim yang membuka web melihat data yang sama
+        function getCloudRef() {
+            return collection(db, 'artifacts', appId, 'public', 'data', 'retail_monthly_v2');
+        }
+
+        async function loadFromCloud() {
+            if(!db || !authUser) return;
+            try {
+                const snap = await getDocs(query(getCloudRef()));
+                let all = [];
+                snap.forEach(d => {
+                    try { all = all.concat(JSON.parse(d.data().data)); } catch(err){}
+                });
+                
+                if(all.length > 0) { 
+                    masterData = all; 
+                    cloudIndicatorTxt.innerText = 'Cloud Tersinkron'; 
+                    document.getElementById('cloudIndicator').classList.replace('text-slate-300', 'text-emerald-400'); 
+                    initDashboard(); 
+                } else {
+                    cloudIndicatorTxt.innerText = 'Cloud Kosong';
+                }
+            } catch(e) { console.warn('Gagal sinkronisasi data.'); }
+        }
+
+        // MESIN DATA CHUNKING: Mencegah error Firestore karena data terlalu besar (Batas 1MB)
+        async function saveToCloud() {
+            if(!db || !authUser) return;
+            try {
+                const colRef = getCloudRef();
+                
+                // Bersihkan laci cloud lama agar data tidak dobel
+                const snap = await getDocs(query(colRef));
+                const delPs = [];
+                snap.forEach(d => delPs.push(deleteDoc(d.ref)));
+                await Promise.all(delPs);
+
+                // Potong data menjadi per 2500 baris agar ringan dikirim ke cloud
+                const chunkSize = 2500;
+                const ps = [];
+                for(let i=0; i < masterData.length; i += chunkSize) {
+                    const chunk = masterData.slice(i, i + chunkSize);
+                    ps.push(setDoc(doc(colRef, `chunk_${i}`), { data: JSON.stringify(chunk), updatedAt: new Date().toISOString() }));
+                }
+                
+                await Promise.all(ps);
+                cloudIndicatorTxt.innerText = 'Tersimpan';
+                document.getElementById('cloudIndicator').classList.replace('text-slate-300', 'text-emerald-400');
+            } catch(e) { 
+                console.error("Gagal simpan ke cloud:", e); 
+                cloudIndicatorTxt.innerText = 'Mode Lokal'; 
+            }
+        }
+
+        function getDivisionFromDept(deptStr) {
+            if (!deptStr) return 'UNKNOWN';
+            let code = parseInt(String(deptStr).split(' ')[0], 10);
+            if (isNaN(code)) return String(deptStr).trim().toUpperCase();
+
+            if ((code >= 1001 && code <= 1014) || [1096,1097,1116,1142,1143,1144,1152,1154,1162].includes(code) || (code >= 5101 && code <= 5108)) return '11 LADIES';
+            if ((code >= 1020 && code <= 1024) || [1098,1099,1145,1146,1147,1148,1153,1155,1159].includes(code) || (code >= 5113 && code <= 5117)) return '12 MEN';
+            if ([1089,1090,1091,5145,5146,5147,1092,1093,1113,1114,1117,5148,5149,1094,1095,5150,5151,1019,1028,5112,5121].includes(code)) return '15 SBA';
+            if ((code >= 1015 && code <= 1018) || (code >= 5109 && code <= 5111) || (code >= 1025 && code <= 1027) || (code >= 5118 && code <= 5120) || (code >= 1611 && code <= 1624)) return '16 INNERWEAR';
+            if ((code >= 1711 && code <= 1735) || [5401,5402,5403].includes(code)) return '17 SPORTS APPAREL';
+            if ((code >= 2001 && code <= 2013) || (code >= 5201 && code <= 5205)) return '21 GROCERY';
+            if ((code >= 2025 && code <= 2030) || code === 5210) return '23 DAILY & DAIRY';
+            if (code === 2031 || code === 2032 || code === 5211) return '24 FISH';
+            if ((code >= 2033 && code <= 2036) || code === 5212) return '25 MEAT';
+            if (code === 2037 || code === 2038 || code === 5213) return '26 PRODUCE';
+            if (code === 2039 || code === 2040 || code === 5214 || code === 5215) return '27 DELICA';
+            if (code === 2041 || code === 2042 || code === 5216 || code === 5217) return '28 BAKERY';
+            if ((code >= 2043 && code <= 2045) || code === 5218) return '29 FOOD COURT';
+            if ((code >= 3001 && code <= 3011) || (code >= 5301 && code <= 5308)) return '31 HOME FASHION';
+            if ((code >= 3012 && code <= 3015) || (code >= 5309 && code <= 5312)) return '32 HOUSEHOLD';
+            if ((code >= 3016 && code <= 3025) || (code >= 5313 && code <= 5319) || code === 5352) return '33 ELECTRICAL';
+            if ((code >= 3026 && code <= 3035) || (code >= 5320 && code <= 5328)) return '34 MULTIMEDIA';
+            if ((code >= 3036 && code <= 3039) || (code >= 3071 && code <= 3075) || (code >= 5329 && code <= 5332) || (code >= 5361 && code <= 5365)) return '35 STATIONERY';
+            if ((code >= 3040 && code <= 3046) || (code >= 5333 && code <= 5339) || code === 5353) return '36 SPORTS';
+            if ((code >= 3047 && code <= 3051) || (code >= 5340 && code <= 5346)) return '37 DIY';
+            if (code >= 3076 && code <= 3098) return '38 HOME COORDY';
+            if (code >= 4011 && code <= 4018) return '41 OTHERS';
+            if ((code >= 1058 && code <= 1088) || (code >= 1103 && code <= 1112) || (code >= 5137 && code <= 5172) || code === 5179 || (code >= 5192 && code <= 5199) || [5408, 5409, 5420, 5421, 5422].includes(code) || (code >= 5427 && code <= 5433)) return '71 BEAUTY';
+            if ((code >= 2014 && code <= 2024) || (code >= 2701 && code <= 2707) || (code >= 5206 && code <= 5209) || (code >= 5701 && code <= 5705)) return '72 NONFOODS&HBC';
+            if ((code >= 7201 && code <= 7241) || [5771, 5781, 5791, 5792].includes(code)) return '73 PET SHOP';
+            if ((code >= 1029 && code <= 1035) || code === 1100 || (code >= 5122 && code <= 5124)) return '81 BABY';
+            if ((code >= 1036 && code <= 1052) || [1101,1102,1115].includes(code) || (code >= 5125 && code <= 5135)) return '82 KIDS';
+            if ((code >= 1053 && code <= 1057) || code === 5136) return '83 TOY';
+            if ((code >= 9011 && code <= 9029) || (code >= 9047 && code <= 9049)) return '91 NON MERCHANDISE';
+            if (code >= 9041 && code <= 9043) return '92 AEON CARD NON-MERCH';
+            if (code === 9031) return '93 NON MERCH WITH INV';
+            
+            const std = { 11:'11 LADIES', 12:'12 MEN', 15:'15 SBA', 16:'16 INNERWEAR', 17:'17 SPORTS APPAREL', 21:'21 GROCERY', 23:'23 DAILY & DAIRY', 24:'24 FISH', 25:'25 MEAT', 26:'26 PRODUCE', 27:'27 DELICA', 28:'28 BAKERY', 29:'29 FOOD COURT', 31:'31 HOME FASHION', 32:'32 HOUSEHOLD', 33:'33 ELECTRICAL', 34:'34 MULTIMEDIA', 35:'35 STATIONERY', 36:'36 SPORTS', 37:'37 DIY', 38:'38 HOME COORDY', 41:'41 OTHERS', 71:'71 BEAUTY', 72:'72 NONFOODS&HBC', 73:'73 PET SHOP', 81:'81 BABY', 82:'82 KIDS', 83:'83 TOY' };
+            if(std[code]) return std[code];
+            return String(deptStr).toUpperCase();
+        }
+
+        const formatCurrency = (v, p='Rp ') => p + new Intl.NumberFormat('id-ID').format(Math.floor(v||0));
+        const formatShort = v => { if(!v) return '0'; if(v >= 1e9) return (v/1e9).toFixed(1) + 'M'; if(v >= 1e6) return (v/1e6).toFixed(1) + 'Jt'; return Math.floor(v); };
+        
+        const parseNumber = s => {
+            if(!s) return 0; if(typeof s === 'number') return s;
+            let clean = String(s).trim().replace(/Rp|IDR|\s/ig, '');
+            if((clean.match(/\./g) || []).length > 1) clean = clean.replace(/\./g, '');
+            else if(clean.includes(',') && clean.includes('.')) {
+                let c = clean.lastIndexOf(','), d = clean.lastIndexOf('.');
+                if(c > d) clean = clean.replace(/\./g, '').replace(',', '.'); 
+                else clean = clean.replace(/,/g, ''); 
+            }
+            else if(clean.includes(',')) clean = clean.replace(/,/g, '');
+            else if(clean.includes('.')) {
+                let parts = clean.split('.');
+                if (parts[parts.length - 1].length === 3) clean = clean.replace(/\./g, '');
+            }
+            return parseFloat(clean) || 0;
+        };
+
+        const parseDateString = s => {
+            if(!s) return new Date(NaN);
+            const raw = s.toString().trim();
+            const mMap = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11,ags:7,okt:9};
+            const parts = raw.split(/[\/\-]/);
+            if(parts.length === 3) {
+                let d, m, y;
+                if(parts[2].length === 4) { d=parseInt(parts[0]); m=parseInt(parts[1])-1; y=parseInt(parts[2]); }
+                else if(parts[0].length === 4) { y=parseInt(parts[0]); m=parseInt(parts[1])-1; d=parseInt(parts[2]); }
+                else { d=parseInt(parts[0]); m=parseInt(parts[1])-1; y=2000+parseInt(parts[2]); }
+                
+                if(isNaN(m)) {
+                   let lookup = String(parts[1]).toLowerCase().substring(0,3);
+                   m = mMap[lookup];
+                }
+                return new Date(y, m, d);
+            }
+            return new Date(raw);
+        };
+
+        const getMonthKey = s => { const d = parseDateString(s); return isNaN(d) ? 'Unknown' : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`; };
+        
+        function getColAccessor(firstRow, keysToFind, excludeKeys=[]) {
+            if(!firstRow) return null;
+            const rK = Object.keys(firstRow);
+            for(let k of keysToFind) {
+                const match = rK.find(x => {
+                    let cx = x.replace(/^\uFEFF/, '').toLowerCase().trim();
+                    if(!cx.includes(k.toLowerCase())) return false;
+                    return !excludeKeys.some(ex => cx.includes(ex.toLowerCase()));
+                });
+                if(match) return match;
+            }
+            return null;
+        }
+
+        ['fileSales', 'fileBudget', 'fileDisposal', 'fileDiscount'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) {
+                el.onchange = () => {
+                    const lbl = document.getElementById('lbl'+id.replace('file',''));
+                    if(lbl) {
+                        lbl.classList.remove('bg-slate-700', 'text-slate-300');
+                        lbl.classList.add('bg-emerald-600','text-white');
+                        lbl.innerHTML = `<i data-lucide="check-circle" class="w-3.5 h-3.5"></i> <span>Diterima</span>`;
+                        lucide.createIcons();
+                    }
+                    btnProcess.disabled = false;
+                };
+            }
+        });
+
+        btnProcess.onclick = () => {
+            const files = { sales:'fileSales', budget:'fileBudget', disposal:'fileDisposal', discount:'fileDiscount' };
+            let total = 0, loaded = 0;
+            
+            Object.values(files).forEach(id => { 
+                const el = document.getElementById(id);
+                if(el && el.files && el.files[0]) total++; 
+            });
+            
+            if(total === 0) return;
+            
+            btnProcess.disabled = true; 
+            txtProcess.innerText = "Memproses Data...";
+            uploadStatus.innerHTML = "<div class='bg-blue-600 py-1.5 font-bold tracking-wide animate-pulse'>Memproses Ribuan Baris File...</div>";
+            uploadStatus.classList.remove('hidden');
+            
+            Object.entries(files).forEach(([key, id]) => {
+                const el = document.getElementById(id);
+                if(el && el.files && el.files[0]) {
+                    Papa.parse(el.files[0], { 
+                        header:true, 
+                        skipEmptyLines:true, 
+                        complete: res => { 
+                            rawDataStore[key] = res.data; 
+                            loaded++; 
+                            if(loaded===total) setTimeout(() => executeDataMergeFast(), 100); 
+                        },
+                        error: () => { loaded++; if(loaded===total) setTimeout(() => executeDataMergeFast(), 100); }
+                    });
+                }
+            });
+        };
+
+        function executeDataMergeFast() {
+            try {
+                const map = new Map();
+                masterData.forEach(r => map.set(`${r.date}|${r.division}|${r.deptCode||''}|${r.sku||''}`, {...r})); 
+
+                const tsCache = {}, mkCache = {}, divCache = {};
+                const getTs = d => { if(!tsCache[d]) tsCache[d] = parseDateString(d).getTime(); return tsCache[d]; };
+                const getMK = d => { 
+                    if(!mkCache[d]) {
+                        const date = parseDateString(d);
+                        mkCache[d] = isNaN(date) ? 'Unknown' : `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2, '0')}`;
+                    } 
+                    return mkCache[d]; 
+                };
+                const getDiv = code => { if(!divCache[code]) divCache[code] = getDivisionFromDept(code); return divCache[code]; };
+
+                if(rawDataStore.sales && rawDataStore.sales.length > 0) {
+                    const sample = rawDataStore.sales[0];
+                    const cDate = getColAccessor(sample, ['Adjustment Date', 'Date', 'Tanggal']);
+                    const cDept = getColAccessor(sample, ['Department','Divisi'], ['desc','name']);
+                    const cSku = getColAccessor(sample, ['Short SKU','Item','SKU','Kode Item','Item Code'], ['name','desc']); 
+                    const cItem = getColAccessor(sample, ['Item Desc','Item Name','Deskripsi','Nama Item']);
+                    const cAmt = getColAccessor(sample, ['Sales Amount','Amount'], ['qty','cost','budget']);
+                    const cCost = getColAccessor(sample, ['Sales Cost','Cost'], ['qty','amount']);
+
+                    for(let i=0; i<rawDataStore.sales.length; i++) {
+                        const row = rawDataStore.sales[i];
+                        const d = row[cDate], dRaw = row[cDept];
+                        if(!d || !dRaw) continue;
+                        
+                        const deptStr = String(dRaw).split(' ')[0], div = getDiv(deptStr);
+                        let sku = cSku ? String(row[cSku]).trim() : '';
+                        let item = cItem ? String(row[cItem]).trim() : '';
+                        
+                        let cleanSku = sku.replace(/^0+/, ''); 
+                        let itemKey = cleanSku || item || 'UNKNOWN'; 
+                        let itemDesc = sku && item ? `${sku} - ${item}` : (item || sku || '');
+                        
+                        const k = `${d}|${div}|${deptStr}|${itemKey}`;
+                        let e = map.get(k);
+                        if (!e) {
+                            e = { date:d, timestamp:getTs(d), monthKey:getMK(d), division:div, deptCode:deptStr, itemDesc:itemDesc, sku:itemKey, sales:0, cost:0, budget:0, disposal:0, discount:0 };
+                            map.set(k, e);
+                        } else {
+                            if(itemDesc.length > e.itemDesc.length) e.itemDesc = itemDesc;
+                        }
+                        if(cAmt) e.sales += parseNumber(row[cAmt]);
+                        if(cCost) e.cost += parseNumber(row[cCost]);
+                    }
+                }
+
+                if(rawDataStore.budget && rawDataStore.budget.length > 0) {
+                    const sample = rawDataStore.budget[0];
+                    const cDate = Object.keys(sample).find(k => ['date','tanggal','bulan'].includes(k.replace(/^\uFEFF/, '').toLowerCase().trim()));
+                    const cDept = getColAccessor(sample, ['Department', 'Dept', 'Division', 'Divisi'], ['desc','name']);
+                    const cBudget = getColAccessor(sample, ['Budget','Target','Amount']);
+
+                    for(let i=0; i<rawDataStore.budget.length; i++) {
+                        const row = rawDataStore.budget[i];
+                        if(!cDate) continue;
+                        const d = row[cDate];
+                        if(!d) continue;
+
+                        if (cDept && row[cDept]) {
+                            const rawHeader = row[cDept];
+                            const div = getDiv(rawHeader);
+                            let finalDept = '';
+                            let parsedCode = parseInt(String(rawHeader).split(' ')[0], 10);
+                            if (!isNaN(parsedCode) && parsedCode >= 1000) finalDept = String(parsedCode); 
+
+                            const k = `${d}|${div}|${finalDept}||`;
+                            let e = map.get(k);
+                            if(!e) { e = { date:d, timestamp:getTs(d), monthKey:getMK(d), division:div, deptCode:finalDept, itemDesc:'', sku:'', sales:0, cost:0, budget:0, disposal:0, discount:0 }; map.set(k, e); }
+                            if(cBudget) e.budget += parseNumber(row[cBudget]);
+                        } else {
+                            const keys = Object.keys(row);
+                            for(let j=0; j<keys.length; j++) {
+                                const key = keys[j];
+                                if(key === cDate || key.toLowerCase().includes('total')) continue;
+                                
+                                const div = getDiv(key);
+                                let finalDept = '';
+                                let parsedCode = parseInt(String(key).split(' ')[0], 10);
+                                if (!isNaN(parsedCode) && parsedCode >= 1000) finalDept = String(parsedCode);
+
+                                const k = `${d}|${div}|${finalDept}||`;
+                                let e = map.get(k);
+                                if(!e) { e = { date:d, timestamp:getTs(d), monthKey:getMK(d), division:div, deptCode:finalDept, itemDesc:'', sku:'', sales:0, cost:0, budget:0, disposal:0, discount:0 }; map.set(k, e); }
+                                e.budget += parseNumber(row[key]);
+                            }
+                        }
+                    }
+                }
+
+                ['disposal','discount'].forEach(type => {
+                    if(rawDataStore[type] && rawDataStore[type].length > 0) {
+                        const sample = rawDataStore[type][0];
+                        const cDate = getColAccessor(sample, ['Adjustment Date', 'Date', 'Tanggal']);
+                        const cDept = getColAccessor(sample, ['Department', 'Dept', 'Divisi', 'Division'], ['desc', 'name']);
+                        const cSku = getColAccessor(sample, ['Short SKU', 'Item', 'SKU', 'Kode Item', 'Item Code'], ['name', 'desc']);
+                        const cItem = getColAccessor(sample, ['Item Desc', 'Item Name', 'Deskripsi', 'Nama Item']);
+                        const cVal = getColAccessor(sample, [type.charAt(0).toUpperCase() + type.slice(1), 'Amount']);
+
+                        for(let i=0; i<rawDataStore[type].length; i++) {
+                            const row = rawDataStore[type][i];
+                            const d = row[cDate], dRaw = row[cDept];
+                            if(!d || !dRaw) continue;
+
+                            const deptStr = String(dRaw).split(' ')[0], div = getDiv(deptStr);
+                            let sku = cSku ? String(row[cSku]).trim() : '';
+                            let item = cItem ? String(row[cItem]).trim() : '';
+                            
+                            let cleanSku = sku.replace(/^0+/, ''); 
+                            let itemKey = cleanSku || item || 'UNKNOWN';
+                            let itemDesc = sku && item ? `${sku} - ${item}` : (item || sku || '');
+
+                            const k = type === 'discount' ? `${d}|${div}|${deptStr}|` : `${d}|${div}|${deptStr}|${itemKey}`;
+                            let e = map.get(k);
+                            if(!e) {
+                                e = { date:d, timestamp:getTs(d), monthKey:getMK(d), division:div, deptCode:deptStr, itemDesc: type==='disposal'?itemDesc:'', sku: type==='disposal'?itemKey:'', sales:0, cost:0, budget:0, disposal:0, discount:0 };
+                                map.set(k, e);
+                            } else {
+                                if (type === 'disposal' && itemDesc.length > (e.itemDesc || '').length) e.itemDesc = itemDesc;
+                            }
+                            if(cVal) e[type] += parseNumber(row[cVal]);
+                        }
+                    }
+                });
+
+                masterData = Array.from(map.values());
+                rawDataStore = { sales: [], budget: [], disposal: [], discount: [] };
+                
+                saveToCloud().then(() => { 
+                    initDashboard(); 
+                    txtProcess.innerText = "Proses Data"; 
+                    btnProcess.disabled = false;
+                    uploadStatus.innerHTML = "<div class='bg-emerald-500 py-1.5 font-bold tracking-wide'>✅ PROSES SELESAI!</div>";
+                    setTimeout(() => uploadStatus.classList.add('hidden'), 4000);
+                });
+
+            } catch (err) {
+                txtProcess.innerText = "Proses Data"; 
+                btnProcess.disabled = false;
+                uploadStatus.innerHTML = "<div class='bg-red-500 py-1.5 font-bold'>❌ Error: Format CSV tidak sesuai.</div>";
+                setTimeout(() => uploadStatus.classList.add('hidden'), 5000);
+            }
+        }
+
+        function initDashboard() {
+            dashboardWorkspace.classList.remove('hidden');
+            const mSel = document.getElementById('filterMonth'), dSel = document.getElementById('filterDivision'), dpSel = document.getElementById('filterDepartment');
+            const months = [...new Set(masterData.map(d => d.monthKey))].filter(m => m!=='Unknown').sort();
+            const divs = [...new Set(masterData.map(d => d.division))].sort();
+            
+            mSel.innerHTML = '<option value="ALL">Semua Bulan</option>' + months.map(m => `<option value="${m}">${m}</option>`).join('');
+            dSel.innerHTML = '<option value="ALL">Semua Divisi</option>' + divs.map(d => `<option value="${d}">${d}</option>`).join('');
+
+            const updateDeptFilter = () => {
+                const sDiv = dSel.value;
+                const depts = [...new Set(masterData.filter(d => sDiv==='ALL'||d.division===sDiv).map(d => d.deptCode).filter(Boolean))].sort();
+                dpSel.innerHTML = '<option value="ALL">Semua Departemen</option>' + depts.map(dp => `<option value="${dp}">${dp}</option>`).join('');
+            };
+
+            mSel.onchange = applyFilters;
+            dSel.onchange = () => { updateDeptFilter(); applyFilters(); };
+            dpSel.onchange = applyFilters;
+            updateDeptFilter();
+            
+            document.querySelectorAll('th[data-sort]').forEach(th => th.onclick = () => handleSort(th.dataset.sort));
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const m = document.getElementById('filterMonth').value, d = document.getElementById('filterDivision').value, dp = document.getElementById('filterDepartment').value;
+            filteredData = masterData.filter(x => (m==='ALL'||x.monthKey===m) && (d==='ALL'||x.division===d) && (dp==='ALL'||x.deptCode===dp));
+            updateKPIs(); updateCharts(); sortAndRenderTable();
+        }
+
+        function updateKPIs() {
+            let s=0, b=0, disp=0, disc=0, maxT=0;
+            filteredData.forEach(x => {
+                s += x.sales; b += x.budget; disp += x.disposal; disc += x.discount;
+                if(x.disposal > 0 && x.timestamp > maxT) maxT = x.timestamp;
+            });
+            document.getElementById('kpiTotalSales').innerText = formatCurrency(s);
+            document.getElementById('kpiBudget').innerText = formatShort(b);
+            document.getElementById('kpiAchievement').innerText = (b > 0 ? (s/b*100).toFixed(1) : 0) + '%';
+            document.getElementById('kpiTotalDisposal').innerText = formatCurrency(disp);
+            document.getElementById('kpiDisposalPct').innerText = (s > 0 ? (disp/s*100).toFixed(2) : '0') + '%';
+            document.getElementById('kpiTotalDiscount').innerText = formatCurrency(disc);
+            document.getElementById('kpiDiscountPct').innerText = (s > 0 ? (disc/s*100).toFixed(2) : '0') + '%';
+            document.getElementById('kpiDisposalDate').innerText = maxT ? 'Sampai: ' + new Intl.DateTimeFormat('id-ID', {day:'2-digit', month: 'short', year: 'numeric'}).format(new Date(maxT)) : 'Sampai: -';
+        }
+
+        function updateCharts() {
+            const trend = {}, unit = {};
+            const fDiv = document.getElementById('filterDivision').value;
+            
+            let realTotalSales = 0, realTotalDisp = 0, realTotalDisc = 0;
+
+            filteredData.forEach(x => {
+                realTotalSales += x.sales;
+                realTotalDisp += x.disposal;
+                realTotalDisc += x.discount;
+
+                let tKey = x.monthKey;
+                if (x.timestamp) {
+                    const dateObj = new Date(x.timestamp);
+                    tKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth()+1).padStart(2,'0')}-${String(dateObj.getDate()).padStart(2,'0')}`;
+                }
+                
+                if(!trend[tKey]) trend[tKey] = 0; 
+                trend[tKey] += x.sales;
+                
+                let uKey = x.division;
+                if (fDiv !== 'ALL') uKey = x.deptCode ? x.deptCode : x.division; 
+                if(!unit[uKey]) unit[uKey] = { s:0, d:0, b:0, c:0 };
+                unit[uKey].s += x.sales; unit[uKey].d += x.disposal; unit[uKey].b += x.budget; unit[uKey].c += x.discount;
+            });
+            
+            const sorted = Object.entries(unit).sort((a,b) => b[1].s - a[1].s).slice(0, 15);
+            const lbls = sorted.map(x => x[0]), sls = sorted.map(x => x[1].s), bdg = sorted.map(x => x[1].b), dsp = sorted.map(x => x[1].d), dsc = sorted.map(x => x[1].c);
+
+            const sortedTrendKeys = Object.keys(trend).sort();
+            const trendLabels = sortedTrendKeys.map(k => {
+                if(k === 'Unknown') return 'N/A';
+                const p = k.split('-');
+                if(p.length === 3) return `${p[2]} ${['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'][parseInt(p[1])-1]}`;
+                if(p.length === 2) return `${['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'][parseInt(p[1])-1]} '${p[0].substring(2)}`;
+                return k;
+            });
+            const trendValues = sortedTrendKeys.map(k => trend[k]);
+
+            if(sorted.length) {
+                document.getElementById('insightTopSales').innerText = sorted[0][0];
+                document.getElementById('insightTopDisposal').innerText = [...sorted].sort((a,b)=>b[1].d-a[1].d)[0][0];
+                const low = [...sorted].sort((a,b)=>(a[1].b?a[1].s/a[1].b:0)-(b[1].b?b[1].s/b[1].b:0))[0];
+                document.getElementById('insightLowAch').innerText = (low && low[1].b) ? `${low[0]} (${(low[1].s/low[1].b*100).toFixed(0)}%)` : '-';
+            }
+
+            const render = (id, cfg) => { 
+                const ctx = document.getElementById(id);
+                if (!ctx) return;
+                if(charts[id]) charts[id].destroy(); 
+                charts[id] = new Chart(ctx, cfg); 
+            };
+
+            const createLabelsConfig = (grandTotal) => ({
+                anchor: 'center', 
+                align: 'center',
+                color: '#ffffff', 
+                font: { weight: 'bold', size: 9 },
+                formatter: (value) => {
+                    if (!grandTotal || grandTotal === 0 || !value) return '';
+                    const pct = (value / grandTotal) * 100;
+                    return pct >= 4 ? pct.toFixed(1) + '%' : ''; 
+                }
+            });
+
+            render('chartTrendSales', { 
+                type:'line', 
+                data:{ labels:trendLabels, datasets:[{ label:'Sales', data:trendValues, borderColor:'#3b82f6', fill:true, backgroundColor:'rgba(59,130,246,0.1)' }] }, 
+                options:{responsive:true, maintainAspectRatio:false, plugins: { datalabels: { display: false } }}
+            });
+
+            render('chartSalesBudget', { 
+                type:'bar', 
+                data:{ 
+                    labels:lbls, 
+                    datasets:[
+                        { label:'Sales', data:sls, backgroundColor:'#e3007b', borderRadius: 2 }, 
+                        { label:'Budget', data:bdg, backgroundColor:'#cbd5e1', borderRadius: 2 }
+                    ] 
+                }, 
+                options:{
+                    responsive:true, 
+                    maintainAspectRatio:false, 
+                    layout: { padding: { top: 20 } },
+                    plugins: { 
+                        legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10 } } },
+                        datalabels: { 
+                            display: true, 
+                            anchor: 'end', 
+                            align: 'top', 
+                            color: '#475569', 
+                            font: { size: 9, weight: 'bold' },
+                            formatter: (value) => value > 0 ? formatShort(value) : '' 
+                        } 
+                    } 
+                } 
+            });
+
+            render('chartSalesContrib', { 
+                type:'doughnut', 
+                data:{ labels:lbls, datasets:[{ data:sls, backgroundColor:['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4'] }] }, 
+                options:{
+                    responsive:true, 
+                    maintainAspectRatio:false, 
+                    plugins:{
+                        legend:{position:'right', labels:{boxWidth:10, font:{size:8}}},
+                        datalabels: createLabelsConfig(realTotalSales)
+                    }
+                } 
+            });
+
+            render('chartSalesDiv', { 
+                type:'bar', 
+                data:{ labels:lbls, datasets:[{ data:sls, backgroundColor:'#3b82f6' }] }, 
+                options:{
+                    responsive:true, maintainAspectRatio:false,
+                    plugins: { legend: {display: false}, datalabels: createLabelsConfig(realTotalSales) }
+                } 
+            });
+
+            render('chartDisposalDiv', { 
+                type:'bar', 
+                data:{ labels:lbls, datasets:[{ data:dsp, backgroundColor:'#ef4444' }] }, 
+                options:{
+                    responsive:true, maintainAspectRatio:false,
+                    plugins: { legend: {display: false}, datalabels: createLabelsConfig(realTotalDisp) }
+                } 
+            });
+
+            render('chartDiscountDiv', { 
+                type:'bar', 
+                data:{ labels:lbls, datasets:[{ data:dsc, backgroundColor:'#f59e0b' }] }, 
+                options:{
+                    responsive:true, maintainAspectRatio:false,
+                    plugins: { legend: {display: false}, datalabels: createLabelsConfig(realTotalDisc) }
+                } 
+            });
+            
+            const rTbody = document.getElementById('rankingTableBody'); 
+            if(rTbody) {
+                rTbody.innerHTML = sorted.map(([k,v], i) => `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-3 py-2 text-center font-bold text-slate-400">#${i+1}</td>
+                        <td class="px-3 py-2 font-bold">${k}</td>
+                        <td class="px-3 py-2 text-right font-bold text-blue-600">${formatCurrency(v.s, '')}</td>
+                        <td class="px-3 py-2 text-right text-accent font-bold">${(v.b?v.s/v.b*100:0).toFixed(1)}%</td>
+                        <td class="px-3 py-2 text-right text-slate-500">${(v.s?v.d/v.s*100:0).toFixed(2)}%</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function handleSort(col) { currentSort.direction = currentSort.column === col && currentSort.direction === 'asc' ? 'desc' : 'asc'; currentSort.column = col; sortAndRenderTable(); }
+        function sortAndRenderTable() {
+            filteredData.sort((a,b) => {
+                let vA = a[currentSort.column], vB = b[currentSort.column];
+                if(currentSort.column === 'date') { 
+                    vA = a.timestamp || 0; vB = b.timestamp || 0; 
+                } else {
+                    vA = String(vA || '').toLowerCase(); vB = String(vB || '').toLowerCase();
+                }
+                if (vA > vB) return currentSort.direction === 'asc' ? 1 : -1;
+                if (vA < vB) return currentSort.direction === 'asc' ? -1 : 1;
+                return 0;
+            });
+            
+            const tbody = document.getElementById('tableBody');
+            if(tbody) {
+                document.getElementById('tableRowCount').innerText = filteredData.length + ' baris';
+                
+                const rowsHtml = filteredData.slice(0, 300).map(r => 
+                    `<tr class="hover:bg-slate-100 transition-colors">
+                        <td class="px-4 py-2">${r.date}</td>
+                        <td class="px-4 py-2 font-bold whitespace-nowrap">${r.division}</td>
+                        <td class="px-4 py-2 text-slate-500">${r.deptCode||'-'}</td>
+                        <td class="px-4 py-2 text-[10px] truncate max-w-[150px]" title="${r.itemDesc||'-'}">${r.itemDesc||'-'}</td>
+                        <td class="px-4 py-2 text-right font-bold text-slate-800">${formatCurrency(r.sales,'')}</td>
+                        <td class="px-4 py-2 text-right text-slate-500">${formatCurrency(r.budget,'')}</td>
+                        <td class="px-4 py-2 text-right text-red-500 font-medium">${formatCurrency(r.disposal,'')}</td>
+                        <td class="px-4 py-2 text-right text-amber-500 font-medium">${formatCurrency(r.discount,'')}</td>
+                    </tr>`
+                ).join('');
+                
+                tbody.innerHTML = rowsHtml;
+                
+                document.querySelectorAll('th .sort-icon').forEach(el => el.className = 'sort-icon');
+                const th = document.querySelector(`th[data-sort="${currentSort.column}"]`);
+                if(th) th.querySelector('.sort-icon').classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+            }
+        }
+
+        document.getElementById('btnConfirmReset').onclick = async () => {
+            const colRef = getCloudRef();
+            const snap = await getDocs(query(colRef));
+            const ps = []; snap.forEach(d => ps.push(deleteDoc(d.ref))); 
+            await Promise.all(ps); 
+            location.reload();
+        };
+
+        document.getElementById('btnBreakdownSales').onclick = () => {
+            const m = {}; let t = 0; 
+            filteredData.forEach(x => { 
+                t += x.sales; 
+                if(x.sales !== 0){ 
+                    let key = x.sku || x.itemDesc || 'TANPA NAMA';
+                    if (!m[key]) m[key] = { label: x.itemDesc || key, sales: 0 };
+                    m[key].sales += x.sales;
+                    if((x.itemDesc || '').length > m[key].label.length) m[key].label = x.itemDesc;
+                } 
+            });
+            const s = Object.values(m).sort((a,b)=>b.sales - a.sales).slice(0,10);
+            document.getElementById('salesBreakdownBody').innerHTML = s.map((v, i) => `<tr><td class="p-3 text-center">${i+1}</td><td class="p-3 font-bold">${v.label}</td><td class="p-3 text-right text-blue-600">${formatCurrency(v.sales,'')}</td><td class="p-3 text-right font-medium">${t ? (v.sales/t*100).toFixed(1) : 0}%</td></tr>`).join('');
+            document.getElementById('salesTotalLabel').innerText = formatCurrency(t); 
+            document.getElementById('salesModal').classList.remove('hidden');
+        };
+
+        document.getElementById('btnBreakdownDisposal').onclick = () => {
+            const m = {}; let t = 0; 
+            filteredData.forEach(x => { 
+                t += x.disposal; 
+                let key = x.sku || x.itemDesc || 'TANPA NAMA';
+                
+                if (!m[key]) m[key] = { label: x.itemDesc || key, sales: 0, disposal: 0 };
+                m[key].sales += x.sales;
+                m[key].disposal += x.disposal;
+
+                if((x.itemDesc || '').length > m[key].label.length) m[key].label = x.itemDesc;
+            });
+            
+            const s = Object.values(m)
+                .filter(entry => entry.disposal > 0)
+                .sort((a,b)=>b.disposal - a.disposal)
+                .slice(0,10);
+
+            document.getElementById('disposalBreakdownBody').innerHTML = s.map((v, i) => {
+                const dispToSalesPct = v.sales > 0 ? (v.disposal / v.sales * 100).toFixed(1) + '%' : 'N/A';
+                
+                return `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-4 py-3 text-center">${i+1}</td>
+                        <td class="px-4 py-3 font-bold">${v.label}</td>
+                        <td class="px-4 py-3 text-right font-medium text-slate-600">${formatCurrency(v.sales, '')}</td>
+                        <td class="px-4 py-3 text-right text-red-600 font-bold">${formatCurrency(v.disposal, '')}</td>
+                        <td class="px-4 py-3 text-right font-bold text-orange-500">${dispToSalesPct}</td>
+                        <td class="px-4 py-3 text-right font-medium">${t ? (v.disposal/t*100).toFixed(1) : 0}%</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            document.getElementById('disposalTotalLabel').innerText = formatCurrency(t); 
+            document.getElementById('disposalModal').classList.remove('hidden');
+        };
+
+        document.getElementById('btnOpenReset').onclick = () => document.getElementById('resetModal').classList.remove('hidden');
+    </script>
+</body>
+</html>
