@@ -911,11 +911,24 @@
             dashboardWorkspace.classList.remove('hidden');
             
             const mSel = document.getElementById('filterMonth'), dSel = document.getElementById('filterDivision'), dpSel = document.getElementById('filterDepartment');
-            const months = [...new Set(masterData.map(d => d.monthKey))].filter(m => m!=='Unknown').sort();
+            let months = [...new Set(masterData.map(d => d.monthKey))].filter(m => m!=='Unknown');
             const divs = [...new Set(masterData.map(d => d.division))].sort();
             
+            // LOGIKA DEFAULT BULAN BERJALAN: Selalu tambahkan dan pilih bulan saat ini
+            const now = new Date();
+            const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            
+            // Jika bulan ini belum ada di data, paksakan masuk ke dalam daftar
+            if (!months.includes(currentMonthKey)) {
+                months.push(currentMonthKey);
+            }
+            months.sort(); // Urutkan kembali
+
             mSel.innerHTML = '<option value="ALL">Semua Bulan</option>' + months.map(m => `<option value="${m}">${m}</option>`).join('');
             dSel.innerHTML = '<option value="ALL">Semua Divisi</option>' + divs.map(d => `<option value="${d}">${d}</option>`).join('');
+
+            // Set default langsung ke bulan berjalan
+            mSel.value = currentMonthKey;
 
             const updateDeptFilter = () => {
                 const sDiv = dSel.value;
