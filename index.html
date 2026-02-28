@@ -124,6 +124,49 @@
     <main class="flex-1 p-4">
         <div id="dashboardWorkspace" class="hidden max-w-[1600px] mx-auto space-y-4 animate-fade-in pb-8">
             
+            <!-- Search Item Section -->
+            <section class="glass-panel p-3 bg-white shadow-sm flex flex-col gap-3">
+                <div class="flex items-center gap-2 text-sm font-bold text-slate-700">
+                    <i data-lucide="search" class="w-4 h-4 text-blue-500"></i> Pencarian Item Terperinci
+                </div>
+                <div class="flex flex-col md:flex-row gap-3">
+                    <div class="flex-1 relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="barcode" class="w-4 h-4 text-slate-400"></i>
+                        </div>
+                        <input type="text" id="searchSku" placeholder="Cari berdasarkan SKU..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded outline-none focus:ring-1 focus:ring-accent pl-9 pr-3 py-2 transition-shadow">
+                    </div>
+                    <div class="flex-1 relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="package" class="w-4 h-4 text-slate-400"></i>
+                        </div>
+                        <input type="text" id="searchDesc" placeholder="Cari berdasarkan Item Description..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded outline-none focus:ring-1 focus:ring-accent pl-9 pr-3 py-2 transition-shadow">
+                    </div>
+                    <button id="btnClearSearch" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded text-sm font-medium transition flex items-center gap-1.5 border border-slate-200 shrink-0">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i> Clear
+                    </button>
+                </div>
+                
+                <!-- Search Result Table -->
+                <div id="searchResultContainer" class="hidden mt-2 overflow-x-auto max-h-[300px] border border-slate-200 rounded shadow-inner">
+                    <table class="w-full text-xs text-left text-slate-600 whitespace-nowrap">
+                        <thead class="bg-blue-50 sticky top-0 text-[10px] uppercase text-slate-500 border-b border-blue-100 z-10">
+                            <tr>
+                                <th class="px-4 py-2.5">Dept</th>
+                                <th class="px-4 py-2.5 font-bold text-slate-700">SKU</th>
+                                <th class="px-4 py-2.5 w-full">Item Description</th>
+                                <th class="px-4 py-2.5 text-right text-blue-600">Sales Amount</th>
+                                <th class="px-4 py-2.5 text-right text-red-600">Disposal</th>
+                                <th class="px-4 py-2.5 text-right text-amber-500">Discount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="searchResultBody" class="divide-y divide-slate-100 bg-white">
+                            <!-- Hasil diisi via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
             <!-- Filters -->
             <section class="flex flex-col xl:flex-row gap-4">
                 <div class="glass-panel p-2.5 flex flex-wrap items-center gap-2 shrink-0 bg-white shadow-sm">
@@ -949,7 +992,95 @@
             const m = document.getElementById('filterMonth').value, d = document.getElementById('filterDivision').value, dp = document.getElementById('filterDepartment').value;
             filteredData = masterData.filter(x => (m==='ALL'||x.monthKey===m) && (d==='ALL'||x.division===d) && (dp==='ALL'||x.deptCode===dp));
             updateKPIs(); updateCharts(); sortAndRenderTable();
+            executeItemSearch(); // Refresh hasil pencarian jika filter berubah
         }
+
+        // ======================================================================
+        // FITUR PENCARIAN ITEM (SKU & DESCRIPTION)
+        // ======================================================================
+        const searchSkuInput = document.getElementById('searchSku');
+        const searchDescInput = document.getElementById('searchDesc');
+        const searchResultContainer = document.getElementById('searchResultContainer');
+        const searchResultBody = document.getElementById('searchResultBody');
+        
+        function executeItemSearch() {
+            const vSku = searchSkuInput.value.trim().toLowerCase();
+            const vDesc = searchDescInput.value.trim().toLowerCase();
+
+            // Jika input kosong, sembunyikan kotak hasil
+            if (!vSku && !vDesc) {
+                searchResultContainer.classList.add('hidden');
+                return;
+            }
+
+            // Agregasi data berdasarkan filter yang aktif (filteredData)
+            const map = new Map();
+            filteredData.forEach(row => {
+                const skuStr = String(row.sku || '').toLowerCase();
+                const descStr = String(row.itemDesc || '').toLowerCase();
+
+                let matchSku = true;
+                if (vSku && !skuStr.includes(vSku)) matchSku = false;
+
+                let matchDesc = true;
+                if (vDesc && !descStr.includes(vDesc)) matchDesc = false;
+
+                if (matchSku && matchDesc) {
+                    const key = `${row.deptCode}|${row.sku}`;
+                    if (!map.has(key)) {
+                        map.set(key, {
+                            deptCode: row.deptCode,
+                            sku: row.sku,
+                            itemDesc: row.itemDesc,
+                            sales: 0,
+                            disposal: 0,
+                            discount: 0
+                        });
+                    }
+                    const e = map.get(key);
+                    e.sales += row.sales;
+                    e.disposal += row.disposal;
+                    e.discount += row.discount;
+                    
+                    // Gunakan deskripsi terpanjang jika ada duplikat ID dengan nama terpotong
+                    if (row.itemDesc && row.itemDesc.length > (e.itemDesc || '').length) {
+                        e.itemDesc = row.itemDesc;
+                    }
+                }
+            });
+
+            // Urutkan berdasarkan Sales terbesar
+            const results = Array.from(map.values()).sort((a, b) => b.sales - a.sales);
+
+            if (results.length === 0) {
+                searchResultBody.innerHTML = `<tr><td colspan="6" class="px-4 py-6 text-center text-slate-400 italic"><i data-lucide="inbox" class="w-6 h-6 mx-auto mb-2 text-slate-300"></i>Tidak ada item yang cocok dengan pencarian.</td></tr>`;
+                lucide.createIcons();
+            } else {
+                searchResultBody.innerHTML = results.map(r => `
+                    <tr class="hover:bg-blue-50/30 transition-colors">
+                        <td class="px-4 py-2 font-medium text-slate-500">${r.deptCode || '-'}</td>
+                        <td class="px-4 py-2 font-bold tracking-tight text-slate-800">${r.sku || '-'}</td>
+                        <td class="px-4 py-2 truncate max-w-[300px]" title="${r.itemDesc || '-'}">${r.itemDesc || '-'}</td>
+                        <td class="px-4 py-2 text-right font-bold text-slate-800">${formatCurrency(r.sales, '')}</td>
+                        <td class="px-4 py-2 text-right text-red-500 font-medium">${formatCurrency(r.disposal, '')}</td>
+                        <td class="px-4 py-2 text-right text-amber-500 font-medium">${formatCurrency(r.discount, '')}</td>
+                    </tr>
+                `).join('');
+            }
+            
+            searchResultContainer.classList.remove('hidden');
+        }
+
+        // Event Listener untuk memicu pencarian saat mengetik
+        searchSkuInput.addEventListener('input', executeItemSearch);
+        searchDescInput.addEventListener('input', executeItemSearch);
+        
+        // Tombol Clear
+        document.getElementById('btnClearSearch').addEventListener('click', () => {
+            searchSkuInput.value = '';
+            searchDescInput.value = '';
+            searchResultContainer.classList.add('hidden');
+        });
 
         // ======================================================================
         // PERBAIKAN: Fungsi Update KPI + Anti-Error `innerText is null`
