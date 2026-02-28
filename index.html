@@ -1033,13 +1033,15 @@
         }
 
         // ======================================================================
-        // FITUR PENCARIAN ITEM (SKU & DESCRIPTION)
+        // FITUR PENCARIAN ITEM (SKU & DESCRIPTION) DENGAN DEBOUNCE (ANTI-LAG)
         // ======================================================================
         const searchSkuInput = document.getElementById('searchSku');
         const searchDescInput = document.getElementById('searchDesc');
         const searchResultContainer = document.getElementById('searchResultContainer');
         const searchResultBody = document.getElementById('searchResultBody');
         
+        let searchTimeout; // Variabel penyimpan jeda waktu
+
         function executeItemSearch() {
             const vSku = searchSkuInput.value.trim().toLowerCase();
             const vDesc = searchDescInput.value.trim().toLowerCase();
@@ -1116,14 +1118,23 @@
             searchResultContainer.classList.remove('hidden');
         }
 
-        // Event Listener untuk memicu pencarian saat mengetik
-        searchSkuInput.addEventListener('input', executeItemSearch);
-        searchDescInput.addEventListener('input', executeItemSearch);
+        // Fungsi Debounce: Menunda eksekusi sampai user berhenti mengetik selama 300ms
+        function debouncedSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                executeItemSearch();
+            }, 300);
+        }
+
+        // Event Listener memanggil fungsi debounce, BUKAN memproses langsung
+        searchSkuInput.addEventListener('input', debouncedSearch);
+        searchDescInput.addEventListener('input', debouncedSearch);
         
         // Tombol Clear
         document.getElementById('btnClearSearch').addEventListener('click', () => {
             searchSkuInput.value = '';
             searchDescInput.value = '';
+            clearTimeout(searchTimeout); // Hapus antrean jika ada
             searchResultContainer.classList.add('hidden');
         });
 
