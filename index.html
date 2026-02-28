@@ -71,7 +71,7 @@
             <div class="flex items-center gap-4">
                 <div class="flex items-center gap-2">
                     <i data-lucide="bar-chart-3" class="w-6 h-6 text-accent"></i>
-                    <span class="font-bold text-xl tracking-tight">Retail<span class="text-accent">Dash</span></span>
+                    <span class="font-bold text-xl tracking-tight">MCT<span class="text-accent">Dash</span></span>
                 </div>
                 <div id="cloudIndicator" class="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1 rounded-full text-xs font-medium text-slate-300 border border-slate-700">
                     <i data-lucide="cloud" class="w-3.5 h-3.5"></i> <span id="cloudIndicatorTxt">Memeriksa Cloud...</span>
@@ -150,14 +150,31 @@
 
             <!-- KPIs -->
             <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                <!-- CARD TOTAL SALES DENGAN MTD FEATURE -->
                 <div class="glass-panel card-hover p-4 border-l-4 border-l-accent flex flex-col justify-between shadow-sm bg-white h-full relative">
                     <div class="flex justify-between items-start mb-2">
-                        <div><p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Sales Store</p><h3 id="kpiTotalSales" class="text-2xl font-black text-slate-800 leading-tight">Rp 0</h3></div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Sales Store</p>
+                            <h3 id="kpiTotalSales" class="text-2xl font-black text-slate-800 leading-tight">Rp 0</h3>
+                        </div>
                         <div class="p-3 bg-blue-50 rounded-lg text-accent"><i data-lucide="shopping-cart" class="w-6 h-6"></i></div>
                     </div>
+                    
                     <div class="flex items-center justify-between text-xs mt-auto w-full">
-                        <div><span id="kpiAchievement" class="font-bold text-slate-400 text-sm">0%</span><span class="text-slate-400 ml-1.5 font-medium">vs Budget (<span id="kpiBudget">0</span>)</span></div>
-                        <button id="btnBreakdownSales" class="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 px-2.5 py-1.5 rounded transition font-bold text-[10px] uppercase tracking-wide border border-blue-100"><i data-lucide="list" class="w-3.5 h-3.5"></i> Top 10 Item</button>
+                        <div class="flex flex-col items-start gap-1">
+                            <div class="flex items-center">
+                                <span id="kpiAchievement" class="font-bold text-slate-700 text-sm">0%</span>
+                                <span class="text-slate-400 ml-1 font-medium">vs Budget (<span id="kpiBudget">0</span>)</span>
+                            </div>
+                            <!-- WADAH MTD BARU -->
+                            <div id="kpiMtdWrapper" class="hidden">
+                                <!-- Isi MTD di-generate via JavaScript di fungsi updateKPIs -->
+                            </div>
+                        </div>
+                        <button id="btnBreakdownSales" class="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 px-2.5 py-1.5 rounded transition font-bold text-[10px] uppercase tracking-wide border border-blue-100 shrink-0">
+                            <i data-lucide="list" class="w-3.5 h-3.5"></i> Top 10 Item
+                        </button>
                     </div>
                 </div>
                 
@@ -168,7 +185,7 @@
                     </div>
                     <div class="flex items-center justify-between text-xs mt-auto w-full">
                         <div><span id="kpiDisposalPct" class="font-bold text-danger text-sm">0%</span><span class="text-slate-400 ml-1.5 font-medium">dari Sales</span></div>
-                        <button id="btnBreakdownDisposal" class="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1.5 rounded transition font-bold text-[10px] uppercase tracking-wide border border-red-100"><i data-lucide="list" class="w-3.5 h-3.5"></i> Top 10 Item</button>
+                        <button id="btnBreakdownDisposal" class="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1.5 rounded transition font-bold text-[10px] uppercase tracking-wide border border-red-100 shrink-0"><i data-lucide="list" class="w-3.5 h-3.5"></i> Top 10 Item</button>
                     </div>
                 </div>
 
@@ -179,7 +196,7 @@
                     </div>
                     <div class="flex items-center justify-between text-xs mt-auto w-full">
                         <div><span id="kpiDiscountPct" class="font-bold text-warning text-sm">0%</span><span class="text-slate-400 ml-1.5 font-medium">dari Sales</span></div>
-                        <button id="btnBreakdownDiscount" class="flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 px-2.5 py-1.5 rounded transition font-bold text-[10px] uppercase tracking-wide border border-amber-100"><i data-lucide="list" class="w-3.5 h-3.5"></i> Top 10 Item</button>
+                        <button id="btnBreakdownDiscount" class="flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 px-2.5 py-1.5 rounded transition font-bold text-[10px] uppercase tracking-wide border border-amber-100 shrink-0"><i data-lucide="list" class="w-3.5 h-3.5"></i> Top 10 Item</button>
                     </div>
                 </div>
             </section>
@@ -921,20 +938,65 @@
             updateKPIs(); updateCharts(); sortAndRenderTable();
         }
 
+        // ======================================================================
+        // PERBAIKAN: Fungsi Update KPI + Anti-Error `innerText is null`
+        // Menambahkan fitur MTD Achievement
+        // ======================================================================
         function updateKPIs() {
             let s=0, b=0, disp=0, disc=0, maxT=0;
             filteredData.forEach(x => {
                 s += x.sales; b += x.budget; disp += x.disposal; disc += x.discount;
-                if(x.disposal > 0 && x.timestamp > maxT) maxT = x.timestamp;
+                // Ambil tanggal paling maksimal (terakhir) sebagai patokan MTD
+                if((x.sales > 0 || x.disposal > 0) && x.timestamp > maxT) maxT = x.timestamp;
             });
-            document.getElementById('kpiTotalSales').innerText = formatCurrency(s);
-            document.getElementById('kpiBudget').innerText = formatShort(b);
-            document.getElementById('kpiAchievement').innerText = (b > 0 ? (s/b*100).toFixed(1) : 0) + '%';
-            document.getElementById('kpiTotalDisposal').innerText = formatCurrency(disp);
-            document.getElementById('kpiDisposalPct').innerText = (s > 0 ? (disp/s*100).toFixed(2) : '0') + '%';
-            document.getElementById('kpiTotalDiscount').innerText = formatCurrency(disc);
-            document.getElementById('kpiDiscountPct').innerText = (s > 0 ? (disc/s*100).toFixed(2) : '0') + '%';
-            document.getElementById('kpiDisposalDate').innerText = maxT ? 'Sampai: ' + new Intl.DateTimeFormat('id-ID', {day:'2-digit', month: 'short', year: 'numeric'}).format(new Date(maxT)) : 'Sampai: -';
+
+            // Fungsi pengaman agar tidak error TypeError `innerText`
+            const safeSet = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = val;
+            };
+
+            safeSet('kpiTotalSales', formatCurrency(s));
+            safeSet('kpiBudget', formatShort(b));
+            safeSet('kpiAchievement', (b > 0 ? (s/b*100).toFixed(1) : 0) + '%');
+            
+            safeSet('kpiTotalDisposal', formatCurrency(disp));
+            safeSet('kpiDisposalPct', (s > 0 ? (disp/s*100).toFixed(2) : '0') + '%');
+            
+            safeSet('kpiTotalDiscount', formatCurrency(disc));
+            safeSet('kpiDiscountPct', (s > 0 ? (disc/s*100).toFixed(2) : '0') + '%');
+            
+            safeSet('kpiDisposalDate', maxT ? 'Sampai: ' + new Intl.DateTimeFormat('id-ID', {day:'2-digit', month: 'short', year: 'numeric'}).format(new Date(maxT)) : 'Sampai: -');
+
+            // Logika Kalkulasi Month-to-Date (MTD)
+            const mtdWrapper = document.getElementById('kpiMtdWrapper');
+            if (mtdWrapper) {
+                // Tampilkan MTD jika ada target budget dan data tanggal
+                if (maxT > 0 && b > 0) {
+                    const lastDate = new Date(maxT);
+                    const day = lastDate.getDate();
+                    // Menghitung jumlah hari total di bulan tersebut
+                    const daysInMonth = new Date(lastDate.getFullYear(), lastDate.getMonth() + 1, 0).getDate();
+                    
+                    // Proporsikan target (Budget) berdasarkan hari yang sudah berlalu
+                    const mtdBudget = b * (day / daysInMonth);
+                    const mtdAch = (s / mtdBudget) * 100;
+
+                    mtdWrapper.classList.remove('hidden');
+                    
+                    // Warna dinamis: >=100% (Hijau), <100% (Merah)
+                    if (mtdAch >= 100) {
+                        mtdWrapper.className = 'flex items-center gap-1 bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-100';
+                        mtdWrapper.innerHTML = `<i data-lucide="trending-up" class="w-3.5 h-3.5"></i><span class="font-bold text-[10px]">MTD: ${mtdAch.toFixed(1)}%</span>`;
+                    } else {
+                        mtdWrapper.className = 'flex items-center gap-1 bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-100';
+                        mtdWrapper.innerHTML = `<i data-lucide="trending-down" class="w-3.5 h-3.5"></i><span class="font-bold text-[10px]">MTD: ${mtdAch.toFixed(1)}%</span>`;
+                    }
+                    lucide.createIcons(); // Render ikon panah MTD
+                } else {
+                    mtdWrapper.classList.add('hidden'); // Sembunyikan kalau tidak ada budget
+                }
+            }
         }
 
         function updateCharts() {
