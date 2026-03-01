@@ -110,7 +110,7 @@
                 </button>
             </div>
         </div>
-        <div id="uploadStatus" class="hidden text-sm text-center py-2 font-bold text-white bg-blue-600"></div>
+        <div id="uploadStatus" class="hidden text-sm text-center py-2 font-bold text-white bg-blue-600 transition-all duration-300"></div>
     </nav>
 
     <!-- LOADING SCREEN -->
@@ -377,15 +377,19 @@
             try {
                 status.classList.remove('hidden');
                 status.innerText = 'Mencadangkan ke Cloud...';
+                
                 const colRef = getCloudRef();
                 const snap = await getDocs(query(colRef));
                 const docsToDelete = [];
                 snap.forEach(d => { if(modifiedDates.has(d.id.split('_')[0])) docsToDelete.push(d.ref); });
                 
-                // Batch delete
+                // Batch delete dengan progres
                 for (let i = 0; i < docsToDelete.length; i += 10) {
                     await Promise.all(docsToDelete.slice(i, i + 10).map(ref => deleteDoc(ref)));
-                    await new Promise(r => setTimeout(r, 100));
+                    await new Promise(r => setTimeout(r, 100)); // Jeda anti error
+                    let pct = Math.round(((i + 10) / docsToDelete.length) * 100);
+                    if (pct > 100) pct = 100;
+                    status.innerText = `Membersihkan data lama... ${pct}%`;
                 }
 
                 const rowsByDate = {};
@@ -401,14 +405,26 @@
                     }
                 });
 
+                // Batch upload dengan progres
                 for (let i = 0; i < uploadTasks.length; i += 5) {
                     await Promise.all(uploadTasks.slice(i, i + 5).map(task => task()));
-                    await new Promise(r => setTimeout(r, 150));
-                    status.innerText = `Mengunggah... ${Math.round(((i+5)/uploadTasks.length)*100)}%`;
+                    await new Promise(r => setTimeout(r, 150)); // Jeda anti error
+                    let pct = Math.round(((i + 5) / uploadTasks.length) * 100);
+                    if (pct > 100) pct = 100;
+                    status.innerText = `Mengunggah data baru... ${pct}%`;
                 }
-                status.innerText = 'Berhasil Tersinkron!';
-                setTimeout(() => status.classList.add('hidden'), 3000);
-            } catch(e) { console.error(e); }
+                
+                status.classList.replace('bg-blue-600', 'bg-emerald-500');
+                status.innerText = '✅ Berhasil Tersinkron!';
+                setTimeout(() => {
+                    status.classList.add('hidden');
+                    status.classList.replace('bg-emerald-500', 'bg-blue-600');
+                }, 3000);
+            } catch(e) { 
+                console.error(e);
+                status.classList.replace('bg-blue-600', 'bg-red-500');
+                status.innerText = '❌ Gagal sinkronisasi ke Cloud';
+            }
         }
 
         function getDivisionFromDept(deptStr) {
@@ -503,7 +519,7 @@
                 });
             }
 
-            // Process Disposal (Berdasarkan Kolom Excel yang diberikan)
+            // Process Disposal
             if(rawDataStore.disposal && rawDataStore.disposal.length > 0) {
                 const sample = rawDataStore.disposal[0];
                 const cDate = getColAccessor(sample, ['Adjustment Date', 'Sales Date', 'Date', 'Tanggal']);
@@ -576,11 +592,19 @@
             // Clean up to save memory
             rawDataStore = { sales: [], budget: [], disposal: [], discount: [] };
             
-            saveIncrementalToCloud(modifiedDates).then(() => {
+            // UPDATE DASHBOARD LANGSUNG KE LAYAR (SEBELUM BACKUP KE CLOUD)
+            initDashboard();
+            
+            // PROSES BACKUP KE CLOUD BERJALAN DI LATAR BELAKANG
+            if (modifiedDates.size > 0) {
+                saveIncrementalToCloud(modifiedDates).then(() => {
+                    document.getElementById('btnProcess').disabled = false;
+                    document.getElementById('txtProcess').innerText = "Proses Data";
+                });
+            } else {
                 document.getElementById('btnProcess').disabled = false;
                 document.getElementById('txtProcess').innerText = "Proses Data";
-                initDashboard();
-            });
+            }
         }
 
         function initDashboard() {
