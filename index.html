@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retail Analytics Dashboard</title>
+    <title>Retail Analytics Dashboard - Fuji Edition</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -65,13 +65,13 @@
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
 
-    <!-- Compact Navbar & Upload Section -->
+    <!-- Navbar -->
     <nav class="bg-primary text-white shadow-md z-50 shrink-0 sticky top-0">
         <div class="px-4 py-2 flex flex-col sm:flex-row justify-between items-center gap-3">
             <div class="flex items-center gap-4">
                 <div class="flex items-center gap-2">
                     <i data-lucide="bar-chart-3" class="w-6 h-6 text-accent"></i>
-                    <span class="font-bold text-xl tracking-tight">MCT<span class="text-accent">Dash</span></span>
+                    <span class="font-bold text-xl tracking-tight">Retail<span class="text-accent">Dash</span></span>
                 </div>
                 <div id="cloudIndicator" class="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1 rounded-full text-xs font-medium text-slate-300 border border-slate-700">
                     <i data-lucide="cloud" class="w-3.5 h-3.5"></i> <span id="cloudIndicatorTxt">Memeriksa Cloud...</span>
@@ -81,109 +81,103 @@
             <div class="flex flex-wrap items-center gap-2">
                 <div class="flex bg-slate-800 rounded-md p-1 gap-1 border border-slate-700 items-center shadow-inner">
                     <input type="file" id="fileSales" accept=".csv" class="hidden">
-                    <label id="lblSales" for="fileSales" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5" title="Unggah Sales (Format Fuji Terkompres)">
+                    <label id="lblSales" for="fileSales" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5">
                         <i data-lucide="upload" class="w-3.5 h-3.5"></i> <span>Sales</span>
                     </label>
 
                     <input type="file" id="fileBudget" accept=".csv" class="hidden">
-                    <label id="lblBudget" for="fileBudget" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5" title="Unggah Budget (Bisa Divisi/Departemen)">
+                    <label id="lblBudget" for="fileBudget" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5">
                         <i data-lucide="upload" class="w-3.5 h-3.5"></i> <span>Budget</span>
                     </label>
 
                     <input type="file" id="fileDisposal" accept=".csv" class="hidden">
-                    <label id="lblDisposal" for="fileDisposal" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5" title="Unggah Data Disposal">
+                    <label id="lblDisposal" for="fileDisposal" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5">
                         <i data-lucide="upload" class="w-3.5 h-3.5"></i> <span>Disposal</span>
                     </label>
 
                     <input type="file" id="fileDiscount" accept=".csv" class="hidden">
-                    <label id="lblDiscount" for="fileDiscount" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5" title="Unggah Data Discount (Disc WO VAT)">
+                    <label id="lblDiscount" for="fileDiscount" class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1.5">
                         <i data-lucide="upload" class="w-3.5 h-3.5"></i> <span>Discount</span>
                     </label>
                 </div>
 
-                <button id="btnProcess" disabled class="bg-accent hover:bg-blue-600 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-1.5 rounded-md text-sm font-semibold transition flex items-center gap-1.5 shadow-sm">
+                <button id="btnProcess" disabled class="bg-accent hover:bg-blue-600 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-1.5 rounded-md text-sm font-semibold transition flex items-center gap-1.5">
                     <i data-lucide="play" class="w-4 h-4"></i> <span id="txtProcess">Proses Data</span>
                 </button>
                 <div class="w-px h-5 bg-slate-600 mx-1"></div>
-                <button id="btnOpenReset" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-md text-sm transition flex items-center gap-1.5 shadow-sm">
+                <button id="btnOpenReset" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-md text-sm transition flex items-center gap-1.5">
                     <i data-lucide="trash-2" class="w-4 h-4"></i> Reset
                 </button>
             </div>
         </div>
-        <div id="uploadStatus" class="hidden text-sm text-center py-2 font-bold tracking-wide text-white shadow-md transition-colors duration-300 bg-blue-600"></div>
+        <div id="uploadStatus" class="hidden text-sm text-center py-2 font-bold text-white bg-blue-600"></div>
     </nav>
 
-    <!-- LOADING SCREEN AWAL -->
+    <!-- LOADING SCREEN -->
     <div id="loadingScreen" class="flex-1 flex flex-col items-center justify-center min-h-[80vh]">
         <div class="loader mb-4"></div>
         <h2 class="text-lg font-bold text-slate-700">Menyiapkan Dashboard</h2>
-        <p id="loadingTextDetail" class="text-sm text-slate-500 mt-1">Sedang mengunduh data penjualan dari Cloud...</p>
+        <p id="loadingTextDetail" class="text-sm text-slate-500 mt-1">Mengambil data dari Cloud...</p>
     </div>
 
-    <!-- Main Workspace (Disembunyikan saat Loading) -->
+    <!-- Main Workspace -->
     <main class="flex-1 p-4">
         <div id="dashboardWorkspace" class="hidden max-w-[1600px] mx-auto space-y-4 animate-fade-in pb-8">
             
-            <!-- Search Item Section -->
+            <!-- Pencarian Item Section -->
             <section class="glass-panel p-3 bg-white shadow-sm flex flex-col gap-3">
                 <div class="flex items-center gap-2 text-sm font-bold text-slate-700">
                     <i data-lucide="search" class="w-4 h-4 text-blue-500"></i> Pencarian Item Terperinci
                 </div>
                 <div class="flex flex-col md:flex-row gap-3">
+                    <!-- Item Description di KIRI -->
                     <div class="flex-1 relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i data-lucide="package" class="w-4 h-4 text-slate-400"></i>
                         </div>
-                        <input type="text" id="searchDesc" placeholder="Cari berdasarkan Item Description..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded outline-none focus:ring-1 focus:ring-accent pl-9 pr-3 py-2 transition-shadow">
+                        <input type="text" id="searchDesc" placeholder="Cari berdasarkan Nama Item..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded outline-none focus:ring-1 focus:ring-accent pl-9 pr-3 py-2 transition-shadow">
                     </div>
+                    <!-- SKU di KANAN -->
                     <div class="flex-1 relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i data-lucide="barcode" class="w-4 h-4 text-slate-400"></i>
                         </div>
                         <input type="text" id="searchSku" placeholder="Cari berdasarkan SKU..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded outline-none focus:ring-1 focus:ring-accent pl-9 pr-3 py-2 transition-shadow">
                     </div>
-                    <button id="btnClearSearch" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded text-sm font-medium transition flex items-center gap-1.5 border border-slate-200 shrink-0">
-                        <i data-lucide="x-circle" class="w-4 h-4"></i> Clear
+                    <button id="btnClearSearch" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded text-sm font-medium transition border border-slate-200 shrink-0">
+                        Clear
                     </button>
                 </div>
                 
-                <!-- Search Result Table with Grids -->
+                <!-- Hasil Search Tabel Bergaris -->
                 <div id="searchResultContainer" class="hidden mt-2 overflow-x-auto max-h-[350px] rounded shadow-inner">
                     <table class="w-full text-xs text-left text-slate-600 whitespace-nowrap border-collapse border border-slate-200">
-                        <thead class="bg-blue-50 sticky top-0 text-[10px] uppercase text-slate-600 z-10">
+                        <thead class="bg-blue-50 sticky top-0 text-[10px] uppercase text-slate-700 z-10 font-bold">
                             <tr>
-                                <th class="px-4 py-2.5 border border-slate-200">Dept</th>
-                                <th class="px-4 py-2.5 border border-slate-200 font-bold text-slate-700">SKU</th>
-                                <th class="px-4 py-2.5 border border-slate-200 w-full">Item Description</th>
-                                <th class="px-4 py-2.5 border border-slate-200 text-right">Sales Qty</th>
-                                <th class="px-4 py-2.5 border border-slate-200 text-right">Disposal Qty</th>
-                                <th class="px-4 py-2.5 border border-slate-200 text-right text-blue-600">Sales Amount</th>
-                                <th class="px-4 py-2.5 border border-slate-200 text-right text-red-600">Disposal</th>
-                                <th class="px-4 py-2.5 border border-slate-200 text-right text-amber-500">Discount</th>
+                                <th class="px-3 py-2 border border-slate-200">Dept</th>
+                                <th class="px-3 py-2 border border-slate-200">SKU</th>
+                                <th class="px-3 py-2 border border-slate-200 w-full">Item Description</th>
+                                <th class="px-3 py-2 border border-slate-200 text-right">Sales Qty</th>
+                                <th class="px-3 py-2 border border-slate-200 text-right">Disp Qty</th>
+                                <th class="px-3 py-2 border border-slate-200 text-right text-blue-700">Sales Amount</th>
+                                <th class="px-3 py-2 border border-slate-200 text-right text-red-600">Disposal</th>
+                                <th class="px-3 py-2 border border-slate-200 text-right text-amber-600">Discount</th>
                             </tr>
                         </thead>
-                        <tbody id="searchResultBody" class="bg-white">
-                            <!-- Hasil diisi via JS -->
-                        </tbody>
+                        <tbody id="searchResultBody" class="bg-white"></tbody>
                     </table>
                 </div>
             </section>
 
-            <!-- Filters -->
+            <!-- Filter Controls -->
             <section class="flex flex-col xl:flex-row gap-4">
-                <div class="glass-panel p-2.5 flex flex-wrap items-center gap-2 shrink-0 bg-white shadow-sm">
+                <div class="glass-panel p-2.5 flex flex-wrap items-center gap-2 bg-white shadow-sm">
                     <i data-lucide="filter" class="w-4 h-4 text-slate-400 ml-1"></i>
-                    <select id="filterMonth" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded outline-none focus:ring-1 focus:ring-accent px-2 py-1.5 font-medium cursor-pointer min-w-[130px]">
-                        <option value="ALL">Semua Bulan</option>
-                    </select>
+                    <select id="filterMonth" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded outline-none px-2 py-1.5 font-medium min-w-[130px]"></select>
                     <div class="w-px h-4 bg-slate-200"></div>
-                    <select id="filterDivision" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded outline-none focus:ring-1 focus:ring-accent px-2 py-1.5 font-medium cursor-pointer min-w-[140px]">
-                        <option value="ALL">Semua Divisi</option>
-                    </select>
+                    <select id="filterDivision" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded outline-none px-2 py-1.5 font-medium min-w-[140px]"></select>
                     <div class="w-px h-4 bg-slate-200"></div>
-                    <select id="filterDepartment" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded outline-none focus:ring-1 focus:ring-accent px-2 py-1.5 font-medium cursor-pointer min-w-[160px]">
-                        <option value="ALL">Semua Departemen</option>
-                    </select>
+                    <select id="filterDepartment" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded outline-none px-2 py-1.5 font-medium min-w-[160px]"></select>
                 </div>
 
                 <div class="glass-panel p-2 flex-1 bg-gradient-to-r from-slate-50 to-white flex items-center justify-around divide-x divide-slate-200 shadow-sm text-center">
@@ -193,11 +187,10 @@
                 </div>
             </section>
 
-            <!-- KPIs -->
+            <!-- KPI Cards -->
             <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                
-                <!-- CARD TOTAL SALES DENGAN MTD FEATURE -->
-                <div class="glass-panel card-hover p-4 border-l-4 border-l-accent flex flex-col justify-between shadow-sm bg-white h-full relative">
+                <!-- Sales Card -->
+                <div class="glass-panel card-hover p-4 border-l-4 border-l-accent flex flex-col justify-between shadow-sm bg-white h-full">
                     <div class="flex justify-between items-start mb-2">
                         <div>
                             <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Sales Store</p>
@@ -205,179 +198,68 @@
                         </div>
                         <div class="p-3 bg-blue-50 rounded-lg text-accent"><i data-lucide="shopping-cart" class="w-6 h-6"></i></div>
                     </div>
-                    
                     <div class="flex items-center justify-between text-xs mt-auto w-full">
                         <div class="flex flex-col items-start gap-1">
                             <div class="flex items-center">
                                 <span id="kpiAchievement" class="font-bold text-slate-700 text-sm">0%</span>
                                 <span class="text-slate-400 ml-1 font-medium">vs Budget (<span id="kpiBudget">0</span>)</span>
                             </div>
-                            <!-- WADAH MTD BARU -->
-                            <div id="kpiMtdWrapper" class="hidden">
-                                <!-- Isi MTD di-generate via JavaScript di fungsi updateKPIs -->
-                            </div>
+                            <div id="kpiMtdWrapper" class="hidden"></div>
                         </div>
-                        <button id="btnBreakdownSales" class="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 px-2.5 py-1.5 rounded transition font-bold text-[10px] uppercase tracking-wide border border-blue-100 shrink-0">
-                            <i data-lucide="list" class="w-3.5 h-3.5"></i> Top 10 Item
-                        </button>
+                        <button id="btnBreakdownSales" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-2.5 py-1.5 rounded font-bold text-[10px] uppercase border border-blue-100">Top 10 Item</button>
                     </div>
                 </div>
                 
-                <div class="glass-panel card-hover p-4 border-l-4 border-l-danger flex flex-col justify-between shadow-sm bg-white h-full relative">
+                <!-- Disposal Card -->
+                <div class="glass-panel card-hover p-4 border-l-4 border-l-danger flex flex-col justify-between bg-white shadow-sm h-full">
                     <div class="flex justify-between items-start mb-2">
-                        <div><div class="flex items-center gap-2 mb-1"><p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Disposal</p><span id="kpiDisposalDate" class="bg-slate-100 text-slate-500 text-[10px] px-1.5 py-0.5 rounded font-medium border border-slate-200">Sampai: -</span></div><h3 id="kpiTotalDisposal" class="text-2xl font-black text-slate-800 leading-tight">Rp 0</h3></div>
+                        <div><div class="flex items-center gap-2 mb-1"><p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Disposal</p><span id="kpiDisposalDate" class="bg-slate-100 text-slate-500 text-[10px] px-1.5 py-0.5 rounded border border-slate-200 font-medium">Sampai: -</span></div><h3 id="kpiTotalDisposal" class="text-2xl font-black text-slate-800 leading-tight">Rp 0</h3></div>
                         <div class="p-3 bg-red-50 rounded-lg text-danger"><i data-lucide="trash-2" class="w-6 h-6"></i></div>
                     </div>
                     <div class="flex items-center justify-between text-xs mt-auto w-full">
                         <div><span id="kpiDisposalPct" class="font-bold text-danger text-sm">0%</span><span class="text-slate-400 ml-1.5 font-medium">dari Sales</span></div>
-                        <button id="btnBreakdownDisposal" class="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1.5 rounded transition font-bold text-[10px] uppercase tracking-wide border border-red-100 shrink-0"><i data-lucide="list" class="w-3.5 h-3.5"></i> Top 10 Item</button>
+                        <button id="btnBreakdownDisposal" class="bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1.5 rounded font-bold text-[10px] uppercase border border-red-100">Top 10 Item</button>
                     </div>
                 </div>
 
-                <div class="glass-panel card-hover p-4 border-l-4 border-l-warning flex flex-col justify-between shadow-sm bg-white h-full relative">
+                <!-- Discount Card -->
+                <div class="glass-panel card-hover p-4 border-l-4 border-l-warning flex flex-col justify-between bg-white shadow-sm h-full">
                     <div class="flex justify-between items-start mb-2">
                         <div><p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Discount</p><h3 id="kpiTotalDiscount" class="text-2xl font-black text-slate-800 leading-tight">Rp 0</h3></div>
                         <div class="p-3 bg-amber-50 rounded-lg text-warning"><i data-lucide="tag" class="w-6 h-6"></i></div>
                     </div>
                     <div class="flex items-center justify-between text-xs mt-auto w-full">
                         <div><span id="kpiDiscountPct" class="font-bold text-warning text-sm">0%</span><span class="text-slate-400 ml-1.5 font-medium">dari Sales</span></div>
-                        <button id="btnBreakdownDiscount" class="flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 px-2.5 py-1.5 rounded transition font-bold text-[10px] uppercase tracking-wide border border-amber-100 shrink-0"><i data-lucide="list" class="w-3.5 h-3.5"></i> Top 10 Item</button>
+                        <button id="btnBreakdownDiscount" class="bg-amber-50 hover:bg-amber-100 text-amber-600 px-2.5 py-1.5 rounded font-bold text-[10px] uppercase border border-amber-100">Top 10 Item</button>
                     </div>
                 </div>
             </section>
 
             <!-- Area Grafik Atas -->
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div class="glass-panel p-4 flex flex-col bg-white shadow-sm"><h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center"><i data-lucide="line-chart" class="w-4 h-4 mr-2 text-blue-500"></i> Trend Sales</h3><div class="chart-container"><canvas id="chartTrendSales"></canvas></div></div>
-                <div class="glass-panel p-4 flex flex-col bg-white shadow-sm"><h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center"><i data-lucide="target" class="w-4 h-4 mr-2 text-emerald-500"></i> Sales vs Budget</h3><div class="chart-container"><canvas id="chartSalesBudget"></canvas></div></div>
-                <div class="glass-panel p-4 flex flex-col bg-white shadow-sm"><h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center"><i data-lucide="pie-chart" class="w-4 h-4 mr-2 text-indigo-500"></i> Kontribusi Per Unit</h3><div class="chart-container flex justify-center"><canvas id="chartSalesContrib"></canvas></div></div>
+                <div class="glass-panel p-4 flex flex-col bg-white"><h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center"><i data-lucide="line-chart" class="w-4 h-4 mr-2 text-blue-500"></i> Trend Sales</h3><div class="chart-container"><canvas id="chartTrendSales"></canvas></div></div>
+                <div class="glass-panel p-4 flex flex-col bg-white"><h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center"><i data-lucide="target" class="w-4 h-4 mr-2 text-emerald-500"></i> Sales vs Budget</h3><div class="chart-container"><canvas id="chartSalesBudget"></canvas></div></div>
+                <div class="glass-panel p-4 flex flex-col bg-white"><h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center"><i data-lucide="pie-chart" class="w-4 h-4 mr-2 text-indigo-500"></i> Kontribusi Per Unit</h3><div class="chart-container flex justify-center"><canvas id="chartSalesContrib"></canvas></div></div>
             </section>
 
-            <!-- Area Grafik Bawah -->
+            <!-- Tabel Detail -->
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div class="glass-panel p-4 flex flex-col bg-white shadow-sm"><h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center"><i data-lucide="bar-chart-2" class="w-4 h-4 mr-2 text-blue-500"></i> Sales per Unit</h3><div class="chart-container"><canvas id="chartSalesDiv"></canvas></div></div>
-                <div class="glass-panel p-4 flex flex-col bg-white shadow-sm"><h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center"><i data-lucide="trash-2" class="w-4 h-4 mr-2 text-red-500"></i> Disposal per Unit</h3><div class="chart-container"><canvas id="chartDisposalDiv"></canvas></div></div>
-                <div class="glass-panel p-4 flex flex-col bg-white shadow-sm"><h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center"><i data-lucide="tag" class="w-4 h-4 mr-2 text-orange-500"></i> Discount per Unit</h3><div class="chart-container"><canvas id="chartDiscountDiv"></canvas></div></div>
-            </section>
-
-            <!-- Area Tabel & Peringkat -->
-            <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div class="glass-panel flex flex-col lg:col-span-1 border-t-4 border-t-yellow-400 bg-white shadow-sm overflow-hidden">
+                <div class="glass-panel flex flex-col lg:col-span-1 border-t-4 border-t-yellow-400 bg-white overflow-hidden">
                     <div class="p-3 bg-slate-50 border-b border-slate-100 flex items-center gap-2"><i data-lucide="trophy" class="w-5 h-5 text-yellow-500"></i><h3 class="text-sm font-bold text-slate-700">Ranking Performa</h3></div>
-                    <div class="overflow-y-auto max-h-80">
-                        <table class="w-full text-xs text-left text-slate-600">
-                            <thead class="text-[10px] text-slate-500 uppercase bg-white sticky top-0 shadow-sm z-10">
-                                <tr>
-                                    <th class="px-3 py-2.5 text-center w-10">Rnk</th>
-                                    <th class="px-3 py-2.5">Unit</th>
-                                    <th class="px-3 py-2.5 text-right text-blue-600">Sales</th>
-                                    <th class="px-3 py-2.5 text-right">Achiev.</th>
-                                    <th class="px-3 py-2.5 text-right">Disp %</th>
-                                </tr>
-                            </thead>
-                            <tbody id="rankingTableBody" class="divide-y divide-slate-50"></tbody>
-                        </table>
-                    </div>
+                    <div class="overflow-y-auto max-h-80"><table class="w-full text-xs text-left text-slate-600"><thead class="text-[10px] text-slate-500 uppercase bg-white sticky top-0 shadow-sm z-10"><tr><th class="px-3 py-2 w-10">Rnk</th><th class="px-3 py-2">Unit</th><th class="px-3 py-2 text-right">Sales</th><th class="px-3 py-2 text-right">Achiev.</th></tr></thead><tbody id="rankingTableBody" class="divide-y divide-slate-50"></tbody></table></div>
                 </div>
-                <div class="glass-panel flex flex-col lg:col-span-2 border-t-4 border-t-blue-500 bg-white shadow-sm overflow-hidden">
-                    <div class="p-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center"><div class="flex items-center gap-2"><i data-lucide="list" class="w-5 h-5 text-blue-500"></i><h3 class="text-sm font-bold text-slate-700">Detail Transaksi</h3></div><span class="text-[11px] font-medium text-slate-500 bg-white px-2.5 py-1 rounded border shadow-sm" id="tableRowCount">0 baris</span></div>
-                    <div class="overflow-y-auto max-h-80"><table class="w-full text-xs text-left text-slate-600 whitespace-nowrap"><thead class="text-[10px] text-slate-500 uppercase bg-white sticky top-0 shadow-sm z-10"><tr><th class="px-4 py-2.5 cursor-pointer hover:bg-slate-100" data-sort="date">Tanggal <span class="sort-icon"></span></th><th class="px-4 py-2.5 cursor-pointer hover:bg-slate-100" data-sort="division">Divisi <span class="sort-icon"></span></th><th class="px-4 py-2.5 cursor-pointer hover:bg-slate-100" data-sort="deptCode">Departemen <span class="sort-icon"></span></th><th class="px-4 py-2.5 cursor-pointer hover:bg-slate-100" data-sort="itemDesc">Item Detail <span class="sort-icon"></span></th><th class="px-4 py-2.5 text-right cursor-pointer hover:bg-slate-100" data-sort="sales">Sales <span class="sort-icon"></span></th><th class="px-4 py-2.5 text-right cursor-pointer hover:bg-slate-100" data-sort="budget">Budget <span class="sort-icon"></span></th><th class="px-4 py-2.5 text-right cursor-pointer hover:bg-slate-100" data-sort="disposal">Disposal <span class="sort-icon"></span></th><th class="px-4 py-2.5 text-right cursor-pointer hover:bg-slate-100" data-sort="discount">Discount <span class="sort-icon"></span></th></tr></thead><tbody id="tableBody" class="divide-y divide-slate-50"></tbody></table></div>
+                <div class="glass-panel flex flex-col lg:col-span-2 border-t-4 border-t-blue-500 bg-white overflow-hidden">
+                    <div class="p-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center"><h3 class="text-sm font-bold text-slate-700">Detail Transaksi</h3><span class="text-[11px] font-medium text-slate-500" id="tableRowCount">0 baris</span></div>
+                    <div class="overflow-y-auto max-h-80"><table class="w-full text-xs text-left text-slate-600 whitespace-nowrap"><thead class="text-[10px] text-slate-500 uppercase bg-white sticky top-0 shadow-sm z-10"><tr><th data-sort="date" class="px-4 py-2">Tanggal</th><th data-sort="division" class="px-4 py-2">Divisi</th><th data-sort="deptCode" class="px-4 py-2">Dept</th><th data-sort="itemDesc" class="px-4 py-2">Item Detail</th><th data-sort="sales" class="px-4 py-2 text-right">Sales</th></tr></thead><tbody id="tableBody" class="divide-y divide-slate-50"></tbody></table></div>
                 </div>
             </section>
         </div>
     </main>
 
-    <!-- Modal Top 10 Sales Ramping -->
-    <div id="salesModal" class="hidden fixed inset-0 bg-slate-900/70 z-[60] flex items-center justify-center backdrop-blur-sm p-4 animate-fade-in">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh] ring-1 ring-white/10">
-            <div class="p-3 bg-blue-50 border-b border-blue-200 flex justify-between items-center">
-                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i data-lucide="award" class="w-4 h-4 text-blue-600"></i> Top 10 Item Sales</h3>
-                <button onclick="document.getElementById('salesModal').classList.add('hidden')" class="p-1 text-slate-400 hover:text-slate-600 rounded"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <div class="overflow-y-auto flex-1 p-4 bg-slate-50">
-                <table class="w-full text-xs text-left text-slate-700 border-collapse border border-slate-300 bg-white shadow-sm">
-                    <thead class="text-[10px] uppercase bg-slate-100 sticky top-0 outline outline-1 outline-slate-200 z-10">
-                        <tr>
-                            <th class="border border-slate-300 px-2 py-2 text-center w-10">#</th>
-                            <th class="border border-slate-300 px-3 py-2 w-32 bg-[#e0f2fe]">SKU</th>
-                            <th class="border border-slate-300 px-3 py-2 bg-[#e0f2fe]">Item Description</th>
-                            <th class="border border-slate-300 px-3 py-2 text-right bg-[#bae6fd]">Sales</th>
-                            <th class="border border-slate-300 px-3 py-2 text-right w-28 bg-[#bae6fd]">Kontribusi %</th>
-                        </tr>
-                    </thead>
-                    <tbody id="salesBreakdownBody"></tbody>
-                </table>
-            </div>
-            <div class="p-4 bg-white border-t border-slate-200 flex justify-between items-center text-sm shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                <span class="font-bold text-slate-500 uppercase">Total Sales Terfilter:</span>
-                <span id="salesTotalLabel" class="text-lg font-black text-blue-600">Rp 0</span>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal Top 10 Disposal Ramping -->
-    <div id="disposalModal" class="hidden fixed inset-0 bg-slate-900/70 z-[60] flex items-center justify-center backdrop-blur-sm p-4 animate-fade-in">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh] ring-1 ring-white/10">
-            <div class="p-3 bg-red-50 border-b border-red-200 flex justify-between items-center">
-                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i data-lucide="trash-2" class="w-4 h-4 text-red-600"></i> Top 10 Item Disposal</h3>
-                <button onclick="document.getElementById('disposalModal').classList.add('hidden')" class="p-1 text-slate-400 hover:text-slate-600 rounded"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <div class="overflow-y-auto flex-1 p-4 bg-slate-50">
-                <table class="w-full text-xs text-left text-slate-700 border-collapse border border-slate-300 bg-white shadow-sm">
-                    <thead class="text-[10px] uppercase bg-slate-100 sticky top-0 outline outline-1 outline-slate-200 z-10">
-                        <tr>
-                            <th class="border border-slate-300 px-2 py-2 text-center w-10">#</th>
-                            <th class="border border-slate-300 px-3 py-2 w-32 bg-[#fee2e2]">SKU</th>
-                            <th class="border border-slate-300 px-3 py-2 bg-[#fee2e2]">Item Description</th>
-                            <th class="border border-slate-300 px-3 py-2 text-right bg-[#fecaca]">Sales</th>
-                            <th class="border border-slate-300 px-3 py-2 text-right bg-[#fecaca]">Disposal</th>
-                            <th class="border border-slate-300 px-3 py-2 text-right w-36 bg-[#fca5a5]">Disposal to Sales %</th>
-                            <th class="border border-slate-300 px-3 py-2 text-right w-28 bg-[#fecaca]">Kontribusi %</th>
-                        </tr>
-                    </thead>
-                    <tbody id="disposalBreakdownBody"></tbody>
-                </table>
-            </div>
-            <div class="p-4 bg-white border-t border-slate-200 flex justify-between items-center text-sm shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                <span class="font-bold text-slate-500 uppercase">Total Disposal Terfilter:</span>
-                <span id="disposalTotalLabel" class="text-lg font-black text-red-600">Rp 0</span>
-            </div>
-        </div>
-    </div>
+    <!-- Modals -->
+    <div id="salesModal" class="hidden fixed inset-0 bg-slate-900/70 z-[60] flex items-center justify-center backdrop-blur-sm p-4"><div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]"><div class="p-3 bg-blue-50 flex justify-between items-center"><h3 class="text-sm font-bold text-slate-800">Top 10 Item Sales</h3><button onclick="document.getElementById('salesModal').classList.add('hidden')" class="p-1 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="overflow-y-auto flex-1 p-4 bg-slate-50"><table class="w-full text-xs text-left border-collapse border border-slate-300 bg-white shadow-sm"><thead class="bg-slate-100 uppercase text-[10px]"><tr><th class="border border-slate-300 px-2 py-2 text-center w-10">#</th><th class="border border-slate-300 px-3 py-2">SKU</th><th class="border border-slate-300 px-3 py-2">Deskripsi</th><th class="border border-slate-300 px-3 py-2 text-right">Sales</th><th class="border border-slate-300 px-3 py-2 text-right">%</th></tr></thead><tbody id="salesBreakdownBody"></tbody></table></div><div class="p-4 bg-white border-t flex justify-between items-center"><span class="font-bold text-slate-500 uppercase text-xs">Total:</span><span id="salesTotalLabel" class="text-lg font-black text-blue-600">Rp 0</span></div></div></div>
+    <div id="resetModal" class="hidden fixed inset-0 bg-slate-900/60 z-[60] flex items-center justify-center backdrop-blur-sm p-4"><div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl text-center"><i data-lucide="alert-triangle" class="w-12 h-12 text-red-500 mx-auto mb-4"></i><h3 class="text-lg font-bold mb-2">Hapus Seluruh Data?</h3><p class="text-sm text-slate-600 mb-6">Data di Dashboard dan Cloud akan dihapus secara permanen.</p><div class="flex justify-center gap-3"><button onclick="document.getElementById('resetModal').classList.add('hidden')" class="px-4 py-2 bg-slate-100 rounded-lg text-sm font-medium">Batal</button><button id="btnConfirmReset" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-bold">Ya, Hapus</button></div></div></div>
 
-    <!-- Modal Top 10 Discount Ramping -->
-    <div id="discountModal" class="hidden fixed inset-0 bg-slate-900/70 z-[60] flex items-center justify-center backdrop-blur-sm p-4 animate-fade-in">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh] ring-1 ring-white/10">
-            <div class="p-3 bg-amber-50 border-b border-amber-200 flex justify-between items-center">
-                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i data-lucide="tag" class="w-4 h-4 text-amber-600"></i> Top 10 Item Discount</h3>
-                <button onclick="document.getElementById('discountModal').classList.add('hidden')" class="p-1 text-slate-400 hover:text-slate-600 rounded"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <div class="overflow-y-auto flex-1 p-4 bg-slate-50">
-                <table class="w-full text-xs text-left text-slate-700 border-collapse border border-slate-300 bg-white shadow-sm">
-                    <thead class="text-[10px] uppercase bg-slate-100 sticky top-0 outline outline-1 outline-slate-200 z-10">
-                        <tr>
-                            <th class="border border-slate-300 px-2 py-2 text-center w-10">#</th>
-                            <th class="border border-slate-300 px-3 py-2 w-32 bg-[#fef3c7]">SKU</th>
-                            <th class="border border-slate-300 px-3 py-2 bg-[#fef3c7]">Item Description</th>
-                            <th class="border border-slate-300 px-3 py-2 text-right bg-[#fde68a]">Sales</th>
-                            <th class="border border-slate-300 px-3 py-2 text-right bg-[#fde68a]">Discount</th>
-                            <th class="border border-slate-300 px-3 py-2 text-right w-36 bg-[#fcd34d]">Discount to Sales %</th>
-                            <th class="border border-slate-300 px-3 py-2 text-right w-28 bg-[#fde68a]">Kontribusi %</th>
-                        </tr>
-                    </thead>
-                    <tbody id="discountBreakdownBody"></tbody>
-                </table>
-            </div>
-            <div class="p-4 bg-white border-t border-slate-200 flex justify-between items-center text-sm shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                <span class="font-bold text-slate-500 uppercase">Total Discount Terfilter:</span>
-                <span id="discountTotalLabel" class="text-lg font-black text-amber-500">Rp 0</span>
-            </div>
-        </div>
-    </div>
-    
-    <div id="resetModal" class="hidden fixed inset-0 bg-slate-900/60 z-[60] flex items-center justify-center backdrop-blur-sm p-4"><div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl"><div class="flex items-center gap-3 mb-3"><div class="p-2 bg-red-100 text-red-600 rounded-full"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div><h3 class="text-lg font-bold">Hapus Seluruh Data?</h3></div><p class="text-sm text-slate-600 mb-6">Data di Dashboard dan di Cloud Database akan dihapus seluruhnya secara permanen.</p><div class="flex justify-end gap-3"><button onclick="document.getElementById('resetModal').classList.add('hidden')" class="px-4 py-2 bg-slate-100 rounded-lg text-sm font-medium">Batal</button><button id="btnConfirmReset" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-bold">Ya, Bersihkan</button></div></div></div>
-
-    <!-- Mesin JavaScript -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -385,163 +267,153 @@
         lucide.createIcons();
         if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
 
-        // ======================================================================
-        // 🌟 KONFIGURASI FIREBASE ANDA
-        // ======================================================================
         const myFirebaseConfig = {
             apiKey: "AIzaSyAulLwce6oWuyHd74IgJii1cTEiVmxVwQk",
             authDomain: "dashboard-sales-mct.firebaseapp.com",
             projectId: "dashboard-sales-mct",
             storageBucket: "dashboard-sales-mct.firebasestorage.app",
             messagingSenderId: "772083832698",
-            appId: "1:772083832698:web:f48bc1201e471faf2d28c3",
-            measurementId: "G-S7GEBY1EWV"
+            appId: "1:772083832698:web:f48bc1201e471faf2d28c3"
         };
-        // ======================================================================
 
         const appId = 'retail-dashboard-toko';
         let db = null;
-        
-        const cloudIndicatorTxt = document.getElementById('cloudIndicatorTxt');
-
-        // Init Firebase
-        if (myFirebaseConfig && myFirebaseConfig.appId) {
-            try {
-                const app = initializeApp(myFirebaseConfig);
-                db = getFirestore(app);
-                setTimeout(() => loadFromCloud(), 500); 
-            } catch (e) { 
-                console.error("Firebase gagal diinisialisasi.", e); 
-                cloudIndicatorTxt.innerText = 'Error Init DB';
-                document.getElementById('loadingScreen').classList.add('hidden');
-                document.getElementById('dashboardWorkspace').classList.remove('hidden');
-            }
-        } else {
-            document.getElementById('loadingScreen').classList.add('hidden');
-            document.getElementById('dashboardWorkspace').classList.remove('hidden');
-        }
-
         let masterData = [], filteredData = [];
         let rawDataStore = { sales: [], budget: [], disposal: [], discount: [] };
         const charts = {};
         let currentSort = { column: 'date', direction: 'asc' };
+        let searchTimeout;
 
-        const btnProcess = document.getElementById('btnProcess');
-        const txtProcess = document.getElementById('txtProcess');
-        const uploadStatus = document.getElementById('uploadStatus');
-        const dashboardWorkspace = document.getElementById('dashboardWorkspace');
-        const loadingScreen = document.getElementById('loadingScreen');
-        const loadingTextDetail = document.getElementById('loadingTextDetail');
+        // Utilities
+        const formatCurrency = (v, p='Rp ') => p + new Intl.NumberFormat('id-ID').format(Math.floor(v||0));
+        const formatShort = v => { if(!v) return '0'; if(v >= 1e9) return (v/1e9).toFixed(1) + 'M'; if(v >= 1e6) return (v/1e6).toFixed(1) + 'Jt'; return Math.floor(v); };
+        const formatQty = v => new Intl.NumberFormat('id-ID').format(Number(v) || 0);
+        
+        const parseNumber = s => {
+            if(!s) return 0; if(typeof s === 'number') return s;
+            let clean = String(s).trim().replace(/Rp|IDR|\s/ig, '');
+            if(clean.includes(',') && clean.includes('.')) {
+                let c = clean.lastIndexOf(','), d = clean.lastIndexOf('.');
+                if(c > d) clean = clean.replace(/\./g, '').replace(',', '.'); else clean = clean.replace(/,/g, ''); 
+            } else if((clean.match(/\./g) || []).length > 1) clean = clean.replace(/\./g, '');
+            else if(clean.includes(',')) clean = clean.replace(/,/g, '');
+            return parseFloat(clean) || 0;
+        };
 
-        function getCloudRef() {
-            // Karena kita mengubah struktur memori agar tidak ganda, mari gunakan Laci Data Baru (v9)
-            return collection(db, 'artifacts', appId, 'public', 'data', 'retail_monthly_v9');
+        const parseDateString = s => {
+            if(!s) return new Date(NaN);
+            const raw = s.toString().trim();
+            const mMap = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11,ags:7,okt:9};
+            const parts = raw.split(/[\/\-]/);
+            if(parts.length === 3) {
+                let d, m, y;
+                if(parts[2].length === 4) { d=parseInt(parts[0]); m=parseInt(parts[1])-1; y=parseInt(parts[2]); }
+                else if(parts[0].length === 4) { y=parseInt(parts[0]); m=parseInt(parts[1])-1; d=parseInt(parts[2]); }
+                else { d=parseInt(parts[0]); m=parseInt(parts[1])-1; y=2000+parseInt(parts[2]); }
+                if(isNaN(m)) m = mMap[String(parts[1]).toLowerCase().substring(0,3)];
+                return new Date(y, m, d);
+            }
+            return new Date(raw);
+        };
+
+        const getStdDate = raw => { const d = parseDateString(raw); return isNaN(d) ? 'Unknown' : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+        const getMonthKey = s => { const d = parseDateString(s); return isNaN(d) ? 'Unknown' : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`; };
+
+        const parseSkuInfo = (skuVal, descVal) => {
+            let sku = skuVal || '-';
+            let desc = descVal || 'TANPA NAMA';
+            if (desc.startsWith(sku + ' - ')) { desc = desc.substring(sku.length + 3).trim(); }
+            else if (desc.includes(' - ')) { desc = desc.substring(desc.indexOf(' - ') + 3).trim(); }
+            return { sku, desc };
+        };
+
+        function getColAccessor(firstRow, keysToFind, excludeKeys=[]) {
+            if(!firstRow) return null;
+            const rK = Object.keys(firstRow);
+            for(let k of keysToFind) {
+                const match = rK.find(x => x.replace(/^\uFEFF/, '').trim().toLowerCase() === k.toLowerCase());
+                if(match) return match;
+            }
+            for(let k of keysToFind) {
+                const match = rK.find(x => {
+                    let cx = x.replace(/^\uFEFF/, '').toLowerCase().trim();
+                    if(!cx.includes(k.toLowerCase())) return false;
+                    return !excludeKeys.some(ex => cx.includes(ex.toLowerCase()));
+                });
+                if(match) return match;
+            }
+            return null;
         }
+
+        // Firebase Init
+        try {
+            const app = initializeApp(myFirebaseConfig);
+            db = getFirestore(app);
+            loadFromCloud();
+        } catch (e) { console.error("Firebase fail", e); }
+
+        function getCloudRef() { return collection(db, 'artifacts', appId, 'public', 'data', 'retail_monthly_v9'); }
 
         async function loadFromCloud() {
             if(!db) return;
+            const indicator = document.getElementById('cloudIndicatorTxt');
             try {
-                cloudIndicatorTxt.innerText = 'Membaca Cloud...';
-                loadingTextDetail.innerText = 'Mengambil data dari Firebase (ini mungkin butuh beberapa detik tergantung koneksi Anda)...';
-                
+                indicator.innerText = 'Membaca Cloud...';
                 const snap = await getDocs(query(getCloudRef()));
                 let all = [];
-                snap.forEach(d => {
-                    try { all = all.concat(JSON.parse(d.data().data)); } catch(err){}
-                });
-                
-                if(all.length > 0) { 
-                    masterData = all; 
-                    cloudIndicatorTxt.innerText = `Tersinkron (${all.length.toLocaleString('id-ID')} baris)`; 
-                    document.getElementById('cloudIndicator').classList.replace('text-slate-300', 'text-emerald-400'); 
-                    initDashboard(); 
-                } else {
-                    cloudIndicatorTxt.innerText = 'Cloud Kosong';
-                    initDashboard(); // Tampilkan dashboard kosong
-                }
-            } catch(e) { 
-                console.error('Gagal sinkronisasi data:', e);
-                cloudIndicatorTxt.innerText = 'Gagal Akses Cloud'; 
+                snap.forEach(d => { try { all = all.concat(JSON.parse(d.data().data)); } catch(err){} });
+                if(all.length > 0) {
+                    masterData = all;
+                    indicator.innerText = `Tersinkron (${all.length.toLocaleString('id-ID')} baris)`;
+                    document.getElementById('cloudIndicator').classList.replace('text-slate-300', 'text-emerald-400');
+                } else { indicator.innerText = 'Cloud Kosong'; }
                 initDashboard();
-            }
+            } catch(e) { console.error(e); initDashboard(); }
         }
 
         async function saveIncrementalToCloud(modifiedDates) {
             if(!db || modifiedDates.size === 0) return;
+            const status = document.getElementById('uploadStatus');
             try {
-                document.getElementById('cloudIndicator').classList.remove('text-emerald-400', 'text-slate-300');
-                document.getElementById('cloudIndicator').classList.add('text-amber-400');
-                
+                status.classList.remove('hidden');
+                status.innerText = 'Mencadangkan ke Cloud...';
                 const colRef = getCloudRef();
-                
-                uploadStatus.innerHTML = `Menyiapkan Sinkronisasi Bertahap (Incremental)...`;
-                
-                // Ambil daftar dokumen yang akan dihapus
                 const snap = await getDocs(query(colRef));
                 const docsToDelete = [];
-                snap.forEach(d => {
-                    const docDatePrefix = d.id.split('_')[0];
-                    if(modifiedDates.has(docDatePrefix)) {
-                        docsToDelete.push(d.ref);
-                    }
-                });
+                snap.forEach(d => { if(modifiedDates.has(d.id.split('_')[0])) docsToDelete.push(d.ref); });
                 
-                // Hapus secara bertahap untuk menghindari resource-exhausted
+                // Batch delete
                 for (let i = 0; i < docsToDelete.length; i += 10) {
-                    const batch = docsToDelete.slice(i, i + 10);
-                    await Promise.all(batch.map(ref => deleteDoc(ref)));
-                    await new Promise(r => setTimeout(r, 100)); // Delay 100ms
+                    await Promise.all(docsToDelete.slice(i, i + 10).map(ref => deleteDoc(ref)));
+                    await new Promise(r => setTimeout(r, 100));
                 }
 
                 const rowsByDate = {};
                 modifiedDates.forEach(d => rowsByDate[d] = []);
-                masterData.forEach(r => {
-                    if(modifiedDates.has(r.date)) rowsByDate[r.date].push(r);
-                });
+                masterData.forEach(r => { if(modifiedDates.has(r.date)) rowsByDate[r.date].push(r); });
 
                 const uploadTasks = [];
-                const chunkSize = 2000;
-                
                 modifiedDates.forEach(dateStr => {
                     const rows = rowsByDate[dateStr];
-                    for(let i=0; i<rows.length; i+=chunkSize) {
-                        const chunk = rows.slice(i, i+chunkSize);
-                        const docId = `${dateStr}_${i}`;
-                        uploadTasks.push( () => setDoc(doc(colRef, docId), { data: JSON.stringify(chunk), updatedAt: new Date().toISOString() }) );
+                    for(let i=0; i<rows.length; i+=2000) {
+                        const chunk = rows.slice(i, i+2000);
+                        uploadTasks.push(() => setDoc(doc(colRef, `${dateStr}_${i}`), { data: JSON.stringify(chunk) }));
                     }
                 });
-                
-                const batchSize = 5; // Turunkan sedikit ukuran batch
-                for (let i = 0; i < uploadTasks.length; i += batchSize) {
-                    const batch = uploadTasks.slice(i, i + batchSize);
-                    const pct = Math.min(100, Math.round(((i + batch.length) / uploadTasks.length) * 100));
-                    uploadStatus.innerHTML = `<i data-lucide="cloud-upload" class="inline w-5 h-5 mr-1 align-text-bottom"></i> Menyinkronkan Perubahan: <b>${pct}% Selesai</b>`;
-                    lucide.createIcons();
-                    
-                    await Promise.all(batch.map(task => task()));
-                    await new Promise(r => setTimeout(r, 150)); // Beri jeda agar antrean Firestore tidak penuh
-                }
-                
-                cloudIndicatorTxt.innerText = `Berhasil Tersimpan!`;
-                document.getElementById('cloudIndicator').classList.replace('text-amber-400', 'text-emerald-400');
-                uploadStatus.className = "text-sm text-center py-2 font-bold tracking-wide text-white shadow-md transition-colors duration-300 bg-emerald-500";
-                uploadStatus.innerHTML = `✅ BERHASIL TERSINKRON (Update ${modifiedDates.size} Hari)`;
-                
-                setTimeout(() => uploadStatus.classList.add('hidden'), 4000);
 
-            } catch(e) { 
-                console.error("Gagal simpan ke cloud:", e); 
-                cloudIndicatorTxt.innerText = 'Gagal Menyimpan (DB Error)'; 
-                uploadStatus.className = "text-sm text-center py-2 font-bold tracking-wide text-white shadow-md transition-colors duration-300 bg-red-500";
-                uploadStatus.innerHTML = `❌ Gagal mengirim ke Cloud. Koneksi terputus.`;
-            }
+                for (let i = 0; i < uploadTasks.length; i += 5) {
+                    await Promise.all(uploadTasks.slice(i, i + 5).map(task => task()));
+                    await new Promise(r => setTimeout(r, 150));
+                    status.innerText = `Mengunggah... ${Math.round(((i+5)/uploadTasks.length)*100)}%`;
+                }
+                status.innerText = 'Berhasil Tersinkron!';
+                setTimeout(() => status.classList.add('hidden'), 3000);
+            } catch(e) { console.error(e); }
         }
 
         function getDivisionFromDept(deptStr) {
-            if (!deptStr) return 'UNKNOWN';
             let code = parseInt(String(deptStr).split(' ')[0], 10);
             if (isNaN(code)) return String(deptStr).trim().toUpperCase();
-
             if ((code >= 1001 && code <= 1014) || [1096,1097,1116,1142,1143,1144,1152,1154,1162].includes(code) || (code >= 5101 && code <= 5108)) return '11 LADIES';
             if ((code >= 1020 && code <= 1024) || [1098,1099,1145,1146,1147,1148,1153,1155,1159].includes(code) || (code >= 5113 && code <= 5117)) return '12 MEN';
             if ([1089,1090,1091,5145,5146,5147,1092,1093,1113,1114,1117,5148,5149,1094,1095,5150,5151,1019,1028,5112,5121].includes(code)) return '15 SBA';
@@ -570,941 +442,274 @@
             if ((code >= 1029 && code <= 1035) || code === 1100 || (code >= 5122 && code <= 5124)) return '81 BABY';
             if ((code >= 1036 && code <= 1052) || [1101,1102,1115].includes(code) || (code >= 5125 && code <= 5135)) return '82 KIDS';
             if ((code >= 1053 && code <= 1057) || code === 5136) return '83 TOY';
-            if ((code >= 9011 && code <= 9029) || (code >= 9047 && code <= 9049)) return '91 NON MERCHANDISE';
-            if (code >= 9041 && code <= 9043) return '92 AEON CARD NON-MERCH';
-            if (code === 9031) return '93 NON MERCH WITH INV';
-            
-            const std = { 11:'11 LADIES', 12:'12 MEN', 15:'15 SBA', 16:'16 INNERWEAR', 17:'17 SPORTS APPAREL', 21:'21 GROCERY', 23:'23 DAILY & DAIRY', 24:'24 FISH', 25:'25 MEAT', 26:'26 PRODUCE', 27:'27 DELICA', 28:'28 BAKERY', 29:'29 FOOD COURT', 31:'31 HOME FASHION', 32:'32 HOUSEHOLD', 33:'33 ELECTRICAL', 34:'34 MULTIMEDIA', 35:'35 STATIONERY', 36:'36 SPORTS', 37:'37 DIY', 38:'38 HOME COORDY', 41:'41 OTHERS', 71:'71 BEAUTY', 72:'72 NONFOODS&HBC', 73:'73 PET SHOP', 81:'81 BABY', 82:'82 KIDS', 83:'83 TOY' };
-            if(std[code]) return std[code];
-            return String(deptStr).toUpperCase();
+            return 'OTHER';
         }
 
-        const formatCurrency = (v, p='Rp ') => p + new Intl.NumberFormat('id-ID').format(Math.floor(v||0));
-        const formatShort = v => { if(!v) return '0'; if(v >= 1e9) return (v/1e9).toFixed(1) + 'M'; if(v >= 1e6) return (v/1e6).toFixed(1) + 'Jt'; return Math.floor(v); };
-        const formatQty = v => new Intl.NumberFormat('id-ID').format(Number(v) || 0); // Format khusus Quantity
-        
-        // PEMBERSIH DESKRIPSI SKU
-        const parseSkuInfo = (skuVal, descVal) => {
-            let sku = skuVal || '-';
-            let desc = descVal || 'TANPA NAMA';
-            if (desc.startsWith(sku + ' - ')) {
-                desc = desc.substring(sku.length + 3).trim();
-            } else if (desc.includes(' - ')) {
-                desc = desc.substring(desc.indexOf(' - ') + 3).trim();
-            }
-            return { sku, desc };
-        };
-
-        // ======================================================================
-        // PERBAIKAN REVOLUSIONER: ANTI-ERROR ANGKA DESIMAL
-        // Mesin akan 100% menghargai titik tunggal (.) sebagai koma desimal
-        // tanpa membesarkan angka ratusan ribu menjadi ratusan juta!
-        // ======================================================================
-        const parseNumber = s => {
-            if(!s) return 0; if(typeof s === 'number') return s;
-            let clean = String(s).trim().replace(/Rp|IDR|\s/ig, '');
-            if(clean.includes(',') && clean.includes('.')) {
-                let c = clean.lastIndexOf(','), d = clean.lastIndexOf('.');
-                if(c > d) clean = clean.replace(/\./g, '').replace(',', '.'); 
-                else clean = clean.replace(/,/g, ''); 
-            }
-            else if((clean.match(/\./g) || []).length > 1) clean = clean.replace(/\./g, '');
-            else if(clean.includes(',')) clean = clean.replace(/,/g, '');
-            return parseFloat(clean) || 0;
-        };
-
-        const parseDateString = s => {
-            if(!s) return new Date(NaN);
-            const raw = s.toString().trim();
-            const mMap = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11,ags:7,okt:9};
-            const parts = raw.split(/[\/\-]/);
-            if(parts.length === 3) {
-                let d, m, y;
-                if(parts[2].length === 4) { d=parseInt(parts[0]); m=parseInt(parts[1])-1; y=parseInt(parts[2]); }
-                else if(parts[0].length === 4) { y=parseInt(parts[0]); m=parseInt(parts[1])-1; d=parseInt(parts[2]); }
-                else { d=parseInt(parts[0]); m=parseInt(parts[1])-1; y=2000+parseInt(parts[2]); }
-                
-                if(isNaN(m)) m = mMap[String(parts[1]).toLowerCase().substring(0,3)];
-                return new Date(y, m, d);
-            }
-            return new Date(raw);
-        };
-
-        const getStdDate = raw => {
-            const d = parseDateString(raw);
-            if(isNaN(d)) return 'Unknown';
-            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-        };
-
-        const getMonthKey = s => { const d = parseDateString(s); return isNaN(d) ? 'Unknown' : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`; };
-        
-        function getColAccessor(firstRow, keysToFind, excludeKeys=[]) {
-            if(!firstRow) return null;
-            const rK = Object.keys(firstRow);
-            
-            for(let k of keysToFind) {
-                const match = rK.find(x => x.replace(/^\uFEFF/, '').trim().toLowerCase() === k.toLowerCase());
-                if(match) return match;
-            }
-            
-            for(let k of keysToFind) {
-                const match = rK.find(x => {
-                    let cx = x.replace(/^\uFEFF/, '').toLowerCase().trim();
-                    if(!cx.includes(k.toLowerCase())) return false;
-                    return !excludeKeys.some(ex => cx.includes(ex.toLowerCase()));
-                });
-                if(match) return match;
-            }
-            return null;
-        }
-
-        function getUploadedDates(data, dateColKeys) {
-            const dates = new Set();
-            if(data && data.length > 0) {
-                const sample = data[0];
-                const cDate = getColAccessor(sample, dateColKeys);
-                if(cDate) {
-                    data.forEach(r => { 
-                        if(r[cDate] && !String(r[cDate]).toLowerCase().includes('total')) {
-                            const std = getStdDate(r[cDate]);
-                            if (std !== 'Unknown') dates.add(std);
-                        }
-                    });
-                } else if (dateColKeys.includes('bulan')) {
-                    const keys = Object.keys(sample);
-                    const cDateCol = keys.find(k => ['date','tanggal','bulan'].includes(k.replace(/^\uFEFF/, '').toLowerCase().trim()));
-                    if(cDateCol) {
-                        data.forEach(r => {
-                            if(r[cDateCol] && !String(r[cDateCol]).toLowerCase().includes('total')) {
-                                const std = getStdDate(r[cDateCol]);
-                                if (std !== 'Unknown') dates.add(std);
-                            }
-                        });
-                    }
-                }
-            }
-            return dates;
-        }
-
-        function getUploadedMonths(data, dateColKeys) {
-            const months = new Set();
-            if(data && data.length > 0) {
-                const sample = data[0];
-                const cDate = getColAccessor(sample, dateColKeys);
-                if(cDate) {
-                    data.forEach(r => { 
-                        if(r[cDate] && !String(r[cDate]).toLowerCase().includes('total')) {
-                            const mk = getMonthKey(r[cDate]);
-                            if (mk !== 'Unknown') months.add(mk);
-                        }
-                    });
-                } else if (dateColKeys.includes('bulan')) {
-                    const keys = Object.keys(sample);
-                    const cDateCol = keys.find(k => ['date','tanggal','bulan'].includes(k.replace(/^\uFEFF/, '').toLowerCase().trim()));
-                    if(cDateCol) {
-                        data.forEach(r => {
-                            if(r[cDateCol] && !String(r[cDateCol]).toLowerCase().includes('total')) {
-                                const mk = getMonthKey(r[cDateCol]);
-                                if (mk !== 'Unknown') months.add(mk);
-                            }
-                        });
-                    }
-                }
-            }
-            return months;
-        }
-
+        // Logic Files
         ['fileSales', 'fileBudget', 'fileDisposal', 'fileDiscount'].forEach(id => {
             const el = document.getElementById(id);
-            if(el) {
-                el.onchange = () => {
-                    const lbl = document.getElementById('lbl'+id.replace('file',''));
-                    if(lbl) {
-                        lbl.classList.remove('bg-slate-700', 'text-slate-300');
-                        lbl.classList.add('bg-emerald-600','text-white');
-                        lbl.innerHTML = `<i data-lucide="check-circle" class="w-3.5 h-3.5"></i> <span>Diterima</span>`;
-                        lucide.createIcons();
-                    }
-                    btnProcess.disabled = false;
-                };
-            }
+            if(el) el.onchange = () => {
+                const lbl = document.getElementById('lbl'+id.replace('file',''));
+                lbl.classList.add('bg-emerald-600','text-white');
+                lbl.innerHTML = `<i data-lucide="check-circle" class="w-3.5 h-3.5"></i> <span>Diterima</span>`;
+                lucide.createIcons();
+                document.getElementById('btnProcess').disabled = false;
+            };
         });
 
-        btnProcess.onclick = () => {
+        document.getElementById('btnProcess').onclick = () => {
             const files = { sales:'fileSales', budget:'fileBudget', disposal:'fileDisposal', discount:'fileDiscount' };
             let total = 0, loaded = 0;
-            
-            Object.values(files).forEach(id => { 
-                const el = document.getElementById(id);
-                if(el && el.files && el.files[0]) total++; 
-            });
-            
+            Object.values(files).forEach(id => { if(document.getElementById(id).files[0]) total++; });
             if(total === 0) return;
-            
-            btnProcess.disabled = true; 
-            txtProcess.innerText = "Memproses...";
-            
-            uploadStatus.className = "text-sm text-center py-2.5 font-bold tracking-wide text-white shadow-md transition-colors duration-300 bg-blue-600 animate-pulse";
-            uploadStatus.innerHTML = "Memproses Algoritma Penggabungan Pintar (Smart Merge)...";
-            uploadStatus.classList.remove('hidden');
-            
+            document.getElementById('btnProcess').disabled = true;
+            document.getElementById('txtProcess').innerText = "Memproses...";
             Object.entries(files).forEach(([key, id]) => {
-                const el = document.getElementById(id);
-                if(el && el.files && el.files[0]) {
-                    Papa.parse(el.files[0], { 
-                        header:true, 
-                        skipEmptyLines:true, 
-                        complete: res => { 
-                            rawDataStore[key] = res.data; 
-                            loaded++; 
-                            if(loaded===total) setTimeout(() => executeDataMergeFast(), 100); 
-                        },
-                        error: () => { loaded++; if(loaded===total) setTimeout(() => executeDataMergeFast(), 100); }
-                    });
-                }
+                const file = document.getElementById(id).files[0];
+                if(file) Papa.parse(file, { header:true, complete: res => { rawDataStore[key] = res.data; loaded++; if(loaded===total) executeDataMerge(); }});
             });
         };
 
-        function executeDataMergeFast() {
-            try {
-                const sDates = getUploadedDates(rawDataStore.sales, ['Sales Date', 'Adjustment Date', 'Date', 'Tanggal']);
-                const dDates = getUploadedDates(rawDataStore.disposal, ['Sales Date', 'Adjustment Date', 'Date', 'Tanggal']);
-                const cDates = getUploadedDates(rawDataStore.discount, ['Sales Date', 'Adjustment Date', 'Date', 'Tanggal']);
-                
-                const bMonths = getUploadedMonths(rawDataStore.budget, ['date','tanggal','bulan']);
-                
-                const modifiedDates = new Set();
-                sDates.forEach(d => modifiedDates.add(d));
-                dDates.forEach(d => modifiedDates.add(d));
-                cDates.forEach(d => modifiedDates.add(d));
+        function executeDataMerge() {
+            const modifiedDates = new Set();
+            const map = new Map();
+            
+            // Existing data mapping
+            masterData.forEach(r => {
+                map.set(`${r.date}|${r.division}|${r.deptCode}|${r.sku}`, {...r});
+            });
 
-                if (bMonths.size > 0) {
-                    masterData.forEach(r => {
-                        if (bMonths.has(r.monthKey)) modifiedDates.add(r.date);
-                    });
-                    const bDatesExact = getUploadedDates(rawDataStore.budget, ['date','tanggal','bulan']);
-                    bDatesExact.forEach(d => modifiedDates.add(d));
-                }
+            // Process Sales
+            if(rawDataStore.sales && rawDataStore.sales.length > 0) {
+                const sample = rawDataStore.sales[0];
+                const cDate = getColAccessor(sample, ['Adjustment Date', 'Sales Date', 'Date', 'Tanggal']);
+                const cDept = getColAccessor(sample, ['Department', 'Dept'], ['desc']);
+                const cSku = getColAccessor(sample, ['Short SKU', 'SKU', 'Item', 'Kode Item']);
+                const cItem = getColAccessor(sample, ['Item Desc', 'SKU Desc', 'Nama Item', 'Deskripsi']);
+                const cAmt = getColAccessor(sample, ['Sales Amount', 'Sales WO VAT', 'Net Sales', 'Amount'], ['qty']);
+                const cQty = getColAccessor(sample, ['Sales Qty', 'Net Sales Qty', 'Qty', 'Quantity']);
 
-                const map = new Map();
-                
-                masterData.forEach(r => {
-                    let clone = {...r};
-                    let stdDate = clone.date; 
-
-                    if(sDates.has(stdDate)) { clone.sales = 0; clone.cost = 0; }
-                    if(dDates.has(stdDate)) { clone.disposal = 0; }
-                    if(cDates.has(stdDate)) { clone.discount = 0; }
-                    
-                    if(bMonths.has(clone.monthKey)) { clone.budget = 0; } 
-                    
-                    map.set(`${stdDate}|${clone.division}|${clone.deptCode||''}|${clone.sku||''}`, clone);
-                }); 
-
-                const tsCache = {}, mkCache = {}, divCache = {};
-                const getTs = d => { if(!tsCache[d]) tsCache[d] = parseDateString(d).getTime(); return tsCache[d]; };
-                const getMK = d => { 
-                    if(!mkCache[d]) {
-                        const date = parseDateString(d);
-                        mkCache[d] = isNaN(date) ? 'Unknown' : `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2, '0')}`;
-                    } 
-                    return mkCache[d]; 
-                };
-                const getDiv = code => { if(!divCache[code]) divCache[code] = getDivisionFromDept(code); return divCache[code]; };
-
-                if(rawDataStore.sales && rawDataStore.sales.length > 0) {
-                    const sample = rawDataStore.sales[0];
-                    const cDate = getColAccessor(sample, ['Sales Date', 'Adjustment Date', 'Date', 'Tanggal']);
-                    const cDept = getColAccessor(sample, ['Department', 'Dept', 'Divisi', 'Division'], ['desc','name']);
-                    const cSku = getColAccessor(sample, ['Short SKU','Item','SKU','Kode Item','Item Code'], ['name','desc']); 
-                    const cItem = getColAccessor(sample, ['SKU Desc', 'Item Desc','Item Name','Deskripsi','Nama Item']);
-                    const cAmt = getColAccessor(sample, ['Sales WO VAT', 'Sales Amount', 'Net Sales', 'Amount'], ['qty','cost','budget','disposal','discount']);
-                    const cCost = getColAccessor(sample, ['Sales Cost','Cost'], ['qty','amount']);
-                    
-                    // Ekstraksi Kolom Qty Sales yang diperluas
-                    const cSalesQty = getColAccessor(sample, ['Sales Qty', 'Net Sales Qty', 'Qty', 'Quantity', 'Jml', 'Jumlah']);
-
-                    for(let i=0; i<rawDataStore.sales.length; i++) {
-                        const row = rawDataStore.sales[i];
-                        const rawD = row[cDate], dRaw = row[cDept];
-                        
-                        if(!rawD || !dRaw || String(rawD).toLowerCase().includes('total') || String(dRaw).toLowerCase().includes('total')) continue;
-                        
-                        const d = getStdDate(rawD);
-                        if(d === 'Unknown') continue;
-
-                        const deptStr = String(dRaw).split(' ')[0], div = getDiv(deptStr);
-                        let sku = cSku ? String(row[cSku]).trim() : '';
-                        let item = cItem ? String(row[cItem]).trim() : '';
-                        
-                        let itemKey = sku || item || 'UNKNOWN'; 
-                        let itemDesc = sku && item ? `${sku} - ${item}` : (item || sku || '');
-                        
-                        const k = `${d}|${div}|${deptStr}|${itemKey}`;
-                        let e = map.get(k);
-                        if (!e) {
-                            e = { date:d, timestamp:getTs(d), monthKey:getMK(d), division:div, deptCode:deptStr, itemDesc:itemDesc, sku:itemKey, sales:0, cost:0, budget:0, disposal:0, discount:0, salesQty:0, disposalQty:0 };
-                            map.set(k, e);
-                        } else {
-                            if(itemDesc.length > e.itemDesc.length) e.itemDesc = itemDesc;
-                        }
-                        if(cAmt) e.sales += parseNumber(row[cAmt]);
-                        if(cCost) e.cost += parseNumber(row[cCost]);
-                        if(cSalesQty) e.salesQty += parseNumber(row[cSalesQty]);
-                    }
-                }
-
-                if(rawDataStore.budget && rawDataStore.budget.length > 0) {
-                    const sample = rawDataStore.budget[0];
-                    const cDate = Object.keys(sample).find(k => ['date','tanggal','bulan'].includes(k.replace(/^\uFEFF/, '').toLowerCase().trim()));
-                    const cDept = getColAccessor(sample, ['Department', 'Dept', 'Division', 'Divisi'], ['desc','name']);
-                    const cBudget = getColAccessor(sample, ['Budget','Target','Amount']);
-
-                    for(let i=0; i<rawDataStore.budget.length; i++) {
-                        const row = rawDataStore.budget[i];
-                        if(!cDate) continue;
-                        const rawD = row[cDate];
-                        
-                        if(!rawD || String(rawD).toLowerCase().includes('total')) continue;
-                        
-                        const d = getStdDate(rawD);
-                        if(d === 'Unknown') continue;
-
-                        if (cDept && row[cDept]) {
-                            const rawHeader = row[cDept];
-                            if(String(rawHeader).toLowerCase().includes('total')) continue;
-
-                            const div = getDiv(rawHeader);
-                            let finalDept = '';
-                            let parsedCode = parseInt(String(rawHeader).split(' ')[0], 10);
-                            if (!isNaN(parsedCode) && parsedCode >= 1000) finalDept = String(parsedCode); 
-
-                            const k = `${d}|${div}|${finalDept}||`;
-                            let e = map.get(k);
-                            if(!e) { e = { date:d, timestamp:getTs(d), monthKey:getMK(d), division:div, deptCode:finalDept, itemDesc:'', sku:'', sales:0, cost:0, budget:0, disposal:0, discount:0, salesQty:0, disposalQty:0 }; map.set(k, e); }
-                            if(cBudget) e.budget += parseNumber(row[cBudget]);
-                        } else {
-                            const keys = Object.keys(row);
-                            for(let j=0; j<keys.length; j++) {
-                                const key = keys[j];
-                                if(key === cDate || key.toLowerCase().includes('total')) continue;
-                                
-                                const div = getDiv(key);
-                                let finalDept = '';
-                                let parsedCode = parseInt(String(key).split(' ')[0], 10);
-                                if (!isNaN(parsedCode) && parsedCode >= 1000) finalDept = String(parsedCode);
-
-                                const k = `${d}|${div}|${finalDept}||`;
-                                let e = map.get(k);
-                                if(!e) { e = { date:d, timestamp:getTs(d), monthKey:getMK(d), division:div, deptCode:finalDept, itemDesc:'', sku:'', sales:0, cost:0, budget:0, disposal:0, discount:0, salesQty:0, disposalQty:0 }; map.set(k, e); }
-                                e.budget += parseNumber(row[key]);
-                            }
-                        }
-                    }
-                }
-
-                ['disposal','discount'].forEach(type => {
-                    if(rawDataStore[type] && rawDataStore[type].length > 0) {
-                        const sample = rawDataStore[type][0];
-                        const cDate = getColAccessor(sample, ['Sales Date', 'Adjustment Date', 'Date', 'Tanggal']);
-                        const cDept = getColAccessor(sample, ['Department', 'Dept', 'Divisi', 'Division'], ['desc', 'name']);
-                        const cSku = getColAccessor(sample, ['Short SKU', 'Item', 'SKU', 'Kode Item', 'Item Code'], ['name', 'desc']);
-                        const cItem = getColAccessor(sample, ['SKU Desc', 'Item Desc', 'Item Name', 'Deskripsi', 'Nama Item']);
-                        
-                        let valKeys = [];
-                        let qtyKeys = [];
-                        
-                        if (type === 'disposal') {
-                            valKeys = ['Disposal', 'Amount'];
-                            qtyKeys = ['Disposal Qty', 'Qty', 'Quantity', 'Jml', 'Jumlah'];
-                        }
-                        if (type === 'discount') {
-                            valKeys = ['Disc WO VAT', 'Discount', 'Disc', 'Amount'];
-                        }
-
-                        const cVal = getColAccessor(sample, valKeys);
-                        const cQty = getColAccessor(sample, qtyKeys);
-
-                        for(let i=0; i<rawDataStore[type].length; i++) {
-                            const row = rawDataStore[type][i];
-                            const rawD = row[cDate], dRaw = row[cDept];
-                            
-                            if(!rawD || !dRaw || String(rawD).toLowerCase().includes('total') || String(dRaw).toLowerCase().includes('total')) continue;
-
-                            const d = getStdDate(rawD);
-                            if(d === 'Unknown') continue;
-
-                            const deptStr = String(dRaw).split(' ')[0], div = getDiv(deptStr);
-                            let sku = cSku ? String(row[cSku]).trim() : '';
-                            let item = cItem ? String(row[cItem]).trim() : '';
-                            
-                            let itemKey = sku || item || 'UNKNOWN';
-                            let itemDesc = sku && item ? `${sku} - ${item}` : (item || sku || '');
-
-                            const k = `${d}|${div}|${deptStr}|${itemKey}`;
-                            let e = map.get(k);
-                            if(!e) {
-                                e = { date:d, timestamp:getTs(d), monthKey:getMK(d), division:div, deptCode:deptStr, itemDesc: itemDesc, sku: itemKey, sales:0, cost:0, budget:0, disposal:0, discount:0, salesQty:0, disposalQty:0 };
-                                map.set(k, e);
-                            } else {
-                                if (itemDesc.length > (e.itemDesc || '').length) e.itemDesc = itemDesc;
-                            }
-                            if(cVal) e[type] += parseNumber(row[cVal]);
-                            if(cQty && type === 'disposal') e.disposalQty += parseNumber(row[cQty]);
-                        }
-                    }
+                rawDataStore.sales.forEach(row => {
+                    const d = getStdDate(row[cDate]); if(d === 'Unknown') return;
+                    modifiedDates.add(d);
+                    const deptStr = String(row[cDept]).split(' ')[0], div = getDivisionFromDept(deptStr);
+                    const sku = String(row[cSku]).trim(), item = String(row[cItem] || '').trim();
+                    const key = `${d}|${div}|${deptStr}|${sku}`;
+                    if(!map.has(key)) map.set(key, {date:d, timestamp:parseDateString(d).getTime(), monthKey:getMonthKey(d), division:div, deptCode:deptStr, sku:sku, itemDesc:item, sales:0, salesQty:0, disposal:0, disposalQty:0, discount:0, budget:0});
+                    const e = map.get(key);
+                    if (cAmt) e.sales += parseNumber(row[cAmt]); 
+                    if (cQty) e.salesQty += parseNumber(row[cQty]);
+                    if (e.itemDesc.length < item.length) e.itemDesc = item;
                 });
-
-                masterData = [];
-                map.forEach(v => {
-                    if (v.sales !== 0 || v.budget !== 0 || v.disposal !== 0 || v.discount !== 0) {
-                        masterData.push(v);
-                    }
-                });
-
-                rawDataStore = { sales: [], budget: [], disposal: [], discount: [] };
-                
-                initDashboard(); 
-                
-                if (modifiedDates.size > 0) {
-                    saveIncrementalToCloud(modifiedDates).then(() => { 
-                        txtProcess.innerText = "Proses Data"; 
-                        btnProcess.disabled = false;
-                    });
-                } else {
-                    txtProcess.innerText = "Proses Data"; 
-                    btnProcess.disabled = false;
-                    uploadStatus.classList.add('hidden');
-                }
-
-            } catch (err) {
-                txtProcess.innerText = "Proses Data"; 
-                btnProcess.disabled = false;
-                uploadStatus.className = "text-sm text-center py-2 font-bold tracking-wide text-white shadow-md transition-colors duration-300 bg-red-500";
-                uploadStatus.innerHTML = `❌ Error: Format CSV tidak sesuai.`;
-                setTimeout(() => uploadStatus.classList.add('hidden'), 5000);
             }
+
+            // Process Disposal (Berdasarkan Kolom Excel yang diberikan)
+            if(rawDataStore.disposal && rawDataStore.disposal.length > 0) {
+                const sample = rawDataStore.disposal[0];
+                const cDate = getColAccessor(sample, ['Adjustment Date', 'Sales Date', 'Date', 'Tanggal']);
+                const cDept = getColAccessor(sample, ['Department', 'Dept', 'Division'], ['desc']);
+                const cSku = getColAccessor(sample, ['Short SKU', 'SKU', 'Item']);
+                const cItem = getColAccessor(sample, ['Item Desc', 'SKU Desc', 'Nama Item']);
+                const cAmt = getColAccessor(sample, ['Disposal Amount', 'Disposal', 'Amount'], ['qty']);
+                const cQty = getColAccessor(sample, ['Disposal Qty', 'Qty', 'Quantity']);
+
+                rawDataStore.disposal.forEach(row => {
+                    const d = getStdDate(row[cDate]); if(d === 'Unknown') return;
+                    modifiedDates.add(d);
+                    const deptStr = String(row[cDept]).split(' ')[0], div = getDivisionFromDept(deptStr);
+                    const sku = String(row[cSku]).trim(), item = String(row[cItem] || '').trim();
+                    const key = `${d}|${div}|${deptStr}|${sku}`;
+                    
+                    if(!map.has(key)) map.set(key, {date:d, timestamp:parseDateString(d).getTime(), monthKey:getMonthKey(d), division:div, deptCode:deptStr, sku:sku, itemDesc:item, sales:0, salesQty:0, disposal:0, disposalQty:0, discount:0, budget:0});
+                    const e = map.get(key);
+                    if (cAmt) e.disposal += parseNumber(row[cAmt]); 
+                    if (cQty) e.disposalQty += parseNumber(row[cQty]);
+                    if (e.itemDesc.length < item.length) e.itemDesc = item;
+                });
+            }
+
+            // Process Discount
+            if(rawDataStore.discount && rawDataStore.discount.length > 0) {
+                const sample = rawDataStore.discount[0];
+                const cDate = getColAccessor(sample, ['Adjustment Date', 'Sales Date', 'Date', 'Tanggal']);
+                const cDept = getColAccessor(sample, ['Department', 'Dept'], ['desc']);
+                const cSku = getColAccessor(sample, ['Short SKU', 'SKU', 'Item']);
+                const cItem = getColAccessor(sample, ['Item Desc', 'SKU Desc']);
+                const cAmt = getColAccessor(sample, ['Disc WO VAT', 'Discount', 'Discount Amount', 'Amount'], ['qty']);
+
+                rawDataStore.discount.forEach(row => {
+                    const d = getStdDate(row[cDate]); if(d === 'Unknown') return;
+                    modifiedDates.add(d);
+                    const deptStr = String(row[cDept]).split(' ')[0], div = getDivisionFromDept(deptStr);
+                    const sku = String(row[cSku]).trim(), item = String(row[cItem] || '').trim();
+                    const key = `${d}|${div}|${deptStr}|${sku}`;
+                    
+                    if(!map.has(key)) map.set(key, {date:d, timestamp:parseDateString(d).getTime(), monthKey:getMonthKey(d), division:div, deptCode:deptStr, sku:sku, itemDesc:item, sales:0, salesQty:0, disposal:0, disposalQty:0, discount:0, budget:0});
+                    const e = map.get(key);
+                    if (cAmt) e.discount += parseNumber(row[cAmt]);
+                    if (e.itemDesc.length < item.length) e.itemDesc = item;
+                });
+            }
+
+            // Process Budget
+            if(rawDataStore.budget && rawDataStore.budget.length > 0) {
+                const sample = rawDataStore.budget[0];
+                const cDate = getColAccessor(sample, ['Date', 'Bulan', 'Tanggal']);
+                const cDept = getColAccessor(sample, ['Department', 'Dept', 'Division', 'Divisi'], ['desc']);
+                const cAmt = getColAccessor(sample, ['Budget', 'Target', 'Amount']);
+
+                rawDataStore.budget.forEach(row => {
+                    const d = getStdDate(row[cDate]); if(d === 'Unknown') return;
+                    modifiedDates.add(d);
+                    const deptStr = String(row[cDept]).split(' ')[0], div = getDivisionFromDept(deptStr);
+                    const sku = '';
+                    const key = `${d}|${div}|${deptStr}|${sku}`;
+                    
+                    if(!map.has(key)) map.set(key, {date:d, timestamp:parseDateString(d).getTime(), monthKey:getMonthKey(d), division:div, deptCode:deptStr, sku:sku, itemDesc:'', sales:0, salesQty:0, disposal:0, disposalQty:0, discount:0, budget:0});
+                    const e = map.get(key);
+                    if (cAmt) e.budget += parseNumber(row[cAmt]);
+                });
+            }
+
+            masterData = Array.from(map.values());
+            
+            // Clean up to save memory
+            rawDataStore = { sales: [], budget: [], disposal: [], discount: [] };
+            
+            saveIncrementalToCloud(modifiedDates).then(() => {
+                document.getElementById('btnProcess').disabled = false;
+                document.getElementById('txtProcess').innerText = "Proses Data";
+                initDashboard();
+            });
         }
 
         function initDashboard() {
-            loadingScreen.classList.add('hidden');
-            dashboardWorkspace.classList.remove('hidden');
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('dashboardWorkspace').classList.remove('hidden');
             
-            const mSel = document.getElementById('filterMonth'), dSel = document.getElementById('filterDivision'), dpSel = document.getElementById('filterDepartment');
+            const mSel = document.getElementById('filterMonth');
+            const dSel = document.getElementById('filterDivision');
+            const dpSel = document.getElementById('filterDepartment');
+            
             let months = [...new Set(masterData.map(d => d.monthKey))].filter(m => m!=='Unknown');
-            const divs = [...new Set(masterData.map(d => d.division))].sort();
-            
-            // LOGIKA DEFAULT BULAN BERJALAN: Selalu tambahkan dan pilih bulan saat ini
             const now = new Date();
             const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            
-            // Jika bulan ini belum ada di data, paksakan masuk ke dalam daftar
-            if (!months.includes(currentMonthKey)) {
-                months.push(currentMonthKey);
-            }
-            months.sort(); // Urutkan kembali
+            if (!months.includes(currentMonthKey)) months.push(currentMonthKey);
+            months.sort();
 
             mSel.innerHTML = '<option value="ALL">Semua Bulan</option>' + months.map(m => `<option value="${m}">${m}</option>`).join('');
-            dSel.innerHTML = '<option value="ALL">Semua Divisi</option>' + divs.map(d => `<option value="${d}">${d}</option>`).join('');
-
-            // Set default langsung ke bulan berjalan
-            mSel.value = currentMonthKey;
-
-            const updateDeptFilter = () => {
-                const sDiv = dSel.value;
-                const depts = [...new Set(masterData.filter(d => sDiv==='ALL'||d.division===sDiv).map(d => d.deptCode).filter(Boolean))].sort();
-                dpSel.innerHTML = '<option value="ALL">Semua Departemen</option>' + depts.map(dp => `<option value="${dp}">${dp}</option>`).join('');
-            };
-
-            mSel.onchange = applyFilters;
-            dSel.onchange = () => { updateDeptFilter(); applyFilters(); };
-            dpSel.onchange = applyFilters;
-            updateDeptFilter();
+            dSel.innerHTML = '<option value="ALL">Semua Divisi</option>' + [...new Set(masterData.map(d => d.division))].sort().map(d => `<option value="${d}">${d}</option>`).join('');
             
-            document.querySelectorAll('th[data-sort]').forEach(th => th.onclick = () => handleSort(th.dataset.sort));
+            mSel.value = currentMonthKey;
+            mSel.onchange = applyFilters;
+            dSel.onchange = applyFilters;
+            dpSel.onchange = applyFilters;
+            
             applyFilters();
         }
 
         function applyFilters() {
-            const m = document.getElementById('filterMonth').value, d = document.getElementById('filterDivision').value, dp = document.getElementById('filterDepartment').value;
+            const m = document.getElementById('filterMonth').value;
+            const d = document.getElementById('filterDivision').value;
+            const dp = document.getElementById('filterDepartment').value;
             filteredData = masterData.filter(x => (m==='ALL'||x.monthKey===m) && (d==='ALL'||x.division===d) && (dp==='ALL'||x.deptCode===dp));
-            updateKPIs(); updateCharts(); sortAndRenderTable();
-            executeItemSearch(); // Refresh hasil pencarian jika filter berubah
+            updateKPIs();
+            executeItemSearch();
         }
 
-        // ======================================================================
-        // FITUR PENCARIAN ITEM (SKU & DESCRIPTION) DENGAN DEBOUNCE (ANTI-LAG)
-        // ======================================================================
-        const searchSkuInput = document.getElementById('searchSku');
-        const searchDescInput = document.getElementById('searchDesc');
-        const searchResultContainer = document.getElementById('searchResultContainer');
-        const searchResultBody = document.getElementById('searchResultBody');
-        
-        let searchTimeout; // Variabel penyimpan jeda waktu
-
-        function executeItemSearch() {
-            const vSku = searchSkuInput.value.trim().toLowerCase();
-            const vDesc = searchDescInput.value.trim().toLowerCase();
-
-            // Jika input kosong, sembunyikan kotak hasil
-            if (!vSku && !vDesc) {
-                searchResultContainer.classList.add('hidden');
-                return;
-            }
-
-            // Agregasi data berdasarkan filter yang aktif (filteredData)
-            const map = new Map();
-            filteredData.forEach(row => {
-                const skuStr = String(row.sku || '').toLowerCase();
-                const descStr = String(row.itemDesc || '').toLowerCase();
-
-                let matchSku = true;
-                if (vSku && !skuStr.includes(vSku)) matchSku = false;
-
-                let matchDesc = true;
-                if (vDesc && !descStr.includes(vDesc)) matchDesc = false;
-
-                if (matchSku && matchDesc) {
-                    const key = `${row.deptCode}|${row.sku}`;
-                    if (!map.has(key)) {
-                        map.set(key, {
-                            deptCode: row.deptCode,
-                            sku: row.sku,
-                            itemDesc: row.itemDesc,
-                            sales: 0,
-                            disposal: 0,
-                            discount: 0,
-                            salesQty: 0,
-                            disposalQty: 0
-                        });
-                    }
-                    const e = map.get(key);
-                    e.sales += row.sales;
-                    e.disposal += row.disposal;
-                    e.discount += row.discount;
-                    e.salesQty += (row.salesQty || 0);
-                    e.disposalQty += (row.disposalQty || 0);
-                    
-                    // Gunakan deskripsi terpanjang jika ada duplikat ID dengan nama terpotong
-                    if (row.itemDesc && row.itemDesc.length > (e.itemDesc || '').length) {
-                        e.itemDesc = row.itemDesc;
-                    }
-                }
-            });
-
-            // Urutkan berdasarkan Sales terbesar
-            const results = Array.from(map.values()).sort((a, b) => b.sales - a.sales);
-
-            if (results.length === 0) {
-                searchResultBody.innerHTML = `<tr><td colspan="8" class="px-4 py-6 border border-slate-200 text-center text-slate-400 italic"><i data-lucide="inbox" class="w-6 h-6 mx-auto mb-2 text-slate-300"></i>Tidak ada item yang cocok dengan pencarian.</td></tr>`;
-                lucide.createIcons();
-            } else {
-                searchResultBody.innerHTML = results.map(r => {
-                    const cleanDesc = parseSkuInfo(r.sku, r.itemDesc).desc; // Murni nama barang saja tanpa SKU
-                    return `
-                    <tr class="hover:bg-blue-50/30 transition-colors">
-                        <td class="px-3 py-1.5 border border-slate-200 font-medium text-slate-500">${r.deptCode || '-'}</td>
-                        <td class="px-3 py-1.5 border border-slate-200 font-bold tracking-tight text-slate-800">${r.sku || '-'}</td>
-                        <td class="px-3 py-1.5 border border-slate-200 truncate max-w-[400px]" title="${cleanDesc}">${cleanDesc}</td>
-                        <td class="px-3 py-1.5 border border-slate-200 text-right font-medium text-slate-700">${formatQty(r.salesQty)}</td>
-                        <td class="px-3 py-1.5 border border-slate-200 text-right font-medium text-slate-700">${formatQty(r.disposalQty)}</td>
-                        <td class="px-3 py-1.5 border border-slate-200 text-right font-bold text-blue-600">${formatCurrency(r.sales, '')}</td>
-                        <td class="px-3 py-1.5 border border-slate-200 text-right font-medium text-red-500">${formatCurrency(r.disposal, '')}</td>
-                        <td class="px-3 py-1.5 border border-slate-200 text-right font-medium text-amber-500">${formatCurrency(r.discount, '')}</td>
-                    </tr>
-                `}).join('');
-            }
-            
-            searchResultContainer.classList.remove('hidden');
-        }
-
-        // Fungsi Debounce: Menunda eksekusi sampai user berhenti mengetik selama 300ms
-        function debouncedSearch() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                executeItemSearch();
-            }, 300);
-        }
-
-        // Event Listener memanggil fungsi debounce, BUKAN memproses langsung
-        searchSkuInput.addEventListener('input', debouncedSearch);
-        searchDescInput.addEventListener('input', debouncedSearch);
-        
-        // Tombol Clear
-        document.getElementById('btnClearSearch').addEventListener('click', () => {
-            searchSkuInput.value = '';
-            searchDescInput.value = '';
-            clearTimeout(searchTimeout); // Hapus antrean jika ada
-            searchResultContainer.classList.add('hidden');
-        });
-
-        // ======================================================================
-        // PERBAIKAN: Fungsi Update KPI + Anti-Error `innerText is null`
-        // Menambahkan fitur MTD Achievement
-        // ======================================================================
         function updateKPIs() {
             let s=0, b=0, disp=0, disc=0, maxT=0;
             filteredData.forEach(x => {
                 s += x.sales; b += x.budget; disp += x.disposal; disc += x.discount;
-                // Ambil tanggal paling maksimal (terakhir) sebagai patokan MTD
                 if((x.sales > 0 || x.disposal > 0) && x.timestamp > maxT) maxT = x.timestamp;
             });
 
-            // Fungsi pengaman agar tidak error TypeError `innerText`
-            const safeSet = (id, val) => {
-                const el = document.getElementById(id);
-                if (el) el.innerText = val;
-            };
-
+            const safeSet = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
             safeSet('kpiTotalSales', formatCurrency(s));
             safeSet('kpiBudget', formatShort(b));
             safeSet('kpiAchievement', (b > 0 ? (s/b*100).toFixed(1) : 0) + '%');
-            
             safeSet('kpiTotalDisposal', formatCurrency(disp));
             safeSet('kpiDisposalPct', (s > 0 ? (disp/s*100).toFixed(2) : '0') + '%');
-            
             safeSet('kpiTotalDiscount', formatCurrency(disc));
             safeSet('kpiDiscountPct', (s > 0 ? (disc/s*100).toFixed(2) : '0') + '%');
-            
             safeSet('kpiDisposalDate', maxT ? 'Sampai: ' + new Intl.DateTimeFormat('id-ID', {day:'2-digit', month: 'short', year: 'numeric'}).format(new Date(maxT)) : 'Sampai: -');
 
-            // Logika Kalkulasi Month-to-Date (MTD)
+            // MTD
             const mtdWrapper = document.getElementById('kpiMtdWrapper');
             if (mtdWrapper) {
-                // Tampilkan MTD jika ada target budget dan data tanggal
                 if (maxT > 0 && b > 0) {
                     const lastDate = new Date(maxT);
-                    const day = lastDate.getDate();
-                    // Menghitung jumlah hari total di bulan tersebut
                     const daysInMonth = new Date(lastDate.getFullYear(), lastDate.getMonth() + 1, 0).getDate();
-                    
-                    // Proporsikan target (Budget) berdasarkan hari yang sudah berlalu
-                    const mtdBudget = b * (day / daysInMonth);
+                    const mtdBudget = b * (lastDate.getDate() / daysInMonth);
                     const mtdAch = (s / mtdBudget) * 100;
-
                     mtdWrapper.classList.remove('hidden');
-                    
-                    // Warna dinamis: >=100% (Hijau), <100% (Merah)
-                    if (mtdAch >= 100) {
-                        mtdWrapper.className = 'flex items-center gap-1 bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-100';
-                        mtdWrapper.innerHTML = `<i data-lucide="trending-up" class="w-3.5 h-3.5"></i><span class="font-bold text-[10px]">MTD: ${mtdAch.toFixed(1)}%</span>`;
-                    } else {
-                        mtdWrapper.className = 'flex items-center gap-1 bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-100';
-                        mtdWrapper.innerHTML = `<i data-lucide="trending-down" class="w-3.5 h-3.5"></i><span class="font-bold text-[10px]">MTD: ${mtdAch.toFixed(1)}%</span>`;
-                    }
-                    lucide.createIcons(); // Render ikon panah MTD
-                } else {
-                    mtdWrapper.classList.add('hidden'); // Sembunyikan kalau tidak ada budget
-                }
+                    mtdWrapper.className = `flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] font-bold ${mtdAch >= 100 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'}`;
+                    mtdWrapper.innerHTML = `MTD: ${mtdAch.toFixed(1)}%`;
+                } else { mtdWrapper.classList.add('hidden'); }
             }
         }
 
-        function updateCharts() {
-            const trend = {}, unit = {};
-            const fDiv = document.getElementById('filterDivision').value;
-            
-            let realTotalSales = 0, realTotalDisp = 0, realTotalDisc = 0;
+        // Search Engine
+        function executeItemSearch() {
+            const vSku = document.getElementById('searchSku').value.trim().toLowerCase();
+            const vDesc = document.getElementById('searchDesc').value.trim().toLowerCase();
+            const container = document.getElementById('searchResultContainer');
+            const body = document.getElementById('searchResultBody');
 
-            filteredData.forEach(x => {
-                realTotalSales += x.sales;
-                realTotalDisp += x.disposal;
-                realTotalDisc += x.discount;
+            if (!vSku && !vDesc) { container.classList.add('hidden'); return; }
 
-                let tKey = x.monthKey;
-                if (x.timestamp) {
-                    const dateObj = new Date(x.timestamp);
-                    tKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth()+1).padStart(2,'0')}-${String(dateObj.getDate()).padStart(2,'0')}`;
-                }
-                
-                if(!trend[tKey]) trend[tKey] = 0; 
-                trend[tKey] += x.sales;
-                
-                let uKey = x.division;
-                if (fDiv !== 'ALL') uKey = x.deptCode ? x.deptCode : x.division; 
-                if(!unit[uKey]) unit[uKey] = { s:0, d:0, b:0, c:0 };
-                unit[uKey].s += x.sales; unit[uKey].d += x.disposal; unit[uKey].b += x.budget; unit[uKey].c += x.discount;
-            });
-            
-            const sorted = Object.entries(unit).sort((a,b) => b[1].s - a[1].s).slice(0, 15);
-            const lbls = sorted.map(x => x[0]), sls = sorted.map(x => x[1].s), bdg = sorted.map(x => x[1].b), dsp = sorted.map(x => x[1].d), dsc = sorted.map(x => x[1].c);
-
-            const sortedTrendKeys = Object.keys(trend).sort();
-            const trendLabels = sortedTrendKeys.map(k => {
-                if(k === 'Unknown') return 'N/A';
-                const p = k.split('-');
-                if(p.length === 3) return `${p[2]} ${['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'][parseInt(p[1])-1]}`;
-                if(p.length === 2) return `${['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'][parseInt(p[1])-1]} '${p[0].substring(2)}`;
-                return k;
-            });
-            const trendValues = sortedTrendKeys.map(k => trend[k]);
-
-            if(sorted.length) {
-                document.getElementById('insightTopSales').innerText = sorted[0][0];
-                document.getElementById('insightTopDisposal').innerText = [...sorted].sort((a,b)=>b[1].d-a[1].d)[0][0];
-                const low = [...sorted].sort((a,b)=>(a[1].b?a[1].s/a[1].b:0)-(b[1].b?b[1].s/b[1].b:0))[0];
-                document.getElementById('insightLowAch').innerText = (low && low[1].b) ? `${low[0]} (${(low[1].s/low[1].b*100).toFixed(0)}%)` : '-';
-            }
-
-            const render = (id, cfg) => { 
-                const ctx = document.getElementById(id);
-                if (!ctx) return;
-                if(charts[id]) charts[id].destroy(); 
-                charts[id] = new Chart(ctx, cfg); 
-            };
-
-            const createLabelsConfig = (grandTotal) => ({
-                anchor: 'center', 
-                align: 'center',
-                color: '#ffffff', 
-                font: { weight: 'bold', size: 9 },
-                formatter: (value) => {
-                    if (!grandTotal || grandTotal === 0 || !value) return '';
-                    const pct = (value / grandTotal) * 100;
-                    return pct >= 4 ? pct.toFixed(1) + '%' : ''; 
+            const map = new Map();
+            filteredData.forEach(row => {
+                const skuStr = String(row.sku || '').toLowerCase();
+                const descStr = String(row.itemDesc || '').toLowerCase();
+                if ((!vSku || skuStr.includes(vSku)) && (!vDesc || descStr.includes(vDesc))) {
+                    const key = `${row.deptCode}|${row.sku}`;
+                    if (!map.has(key)) map.set(key, {deptCode:row.deptCode, sku:row.sku, itemDesc:row.itemDesc, s:0, sq:0, d:0, dq:0, disc:0});
+                    const e = map.get(key);
+                    e.s += row.sales; e.sq += (row.salesQty || 0); e.d += row.disposal; e.dq += (row.disposalQty || 0); e.disc += row.discount;
+                    if(row.itemDesc.length > e.itemDesc.length) e.itemDesc = row.itemDesc;
                 }
             });
 
-            render('chartTrendSales', { 
-                type:'line', 
-                data:{ labels:trendLabels, datasets:[{ label:'Sales', data:trendValues, borderColor:'#3b82f6', fill:true, backgroundColor:'rgba(59,130,246,0.1)' }] }, 
-                options:{responsive:true, maintainAspectRatio:false, plugins: { datalabels: { display: false } }}
-            });
-
-            render('chartSalesBudget', { 
-                type:'bar', 
-                data:{ 
-                    labels:lbls, 
-                    datasets:[
-                        { label:'Sales', data:sls, backgroundColor:'#e3007b', borderRadius: 2 }, 
-                        { label:'Budget', data:bdg, backgroundColor:'#cbd5e1', borderRadius: 2 }
-                    ] 
-                }, 
-                options:{
-                    responsive:true, 
-                    maintainAspectRatio:false, 
-                    layout: { padding: { top: 20 } },
-                    plugins: { 
-                        legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10 } } },
-                        datalabels: { 
-                            display: true, 
-                            anchor: 'end', 
-                            align: 'top', 
-                            color: '#475569', 
-                            font: { size: 9, weight: 'bold' },
-                            formatter: (value) => value > 0 ? formatShort(value) : '' 
-                        } 
-                    } 
-                } 
-            });
-
-            render('chartSalesContrib', { 
-                type:'doughnut', 
-                data:{ labels:lbls, datasets:[{ data:sls, backgroundColor:['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4'] }] }, 
-                options:{
-                    responsive:true, 
-                    maintainAspectRatio:false, 
-                    plugins:{
-                        legend:{position:'right', labels:{boxWidth:10, font:{size:8}}},
-                        datalabels: createLabelsConfig(realTotalSales)
-                    }
-                } 
-            });
-
-            render('chartSalesDiv', { 
-                type:'bar', 
-                data:{ labels:lbls, datasets:[{ data:sls, backgroundColor:'#3b82f6' }] }, 
-                options:{
-                    responsive:true, maintainAspectRatio:false,
-                    plugins: { legend: {display: false}, datalabels: createLabelsConfig(realTotalSales) }
-                } 
-            });
-
-            render('chartDisposalDiv', { 
-                type:'bar', 
-                data:{ labels:lbls, datasets:[{ data:dsp, backgroundColor:'#ef4444' }] }, 
-                options:{
-                    responsive:true, maintainAspectRatio:false,
-                    plugins: { legend: {display: false}, datalabels: createLabelsConfig(realTotalDisp) }
-                } 
-            });
-
-            render('chartDiscountDiv', { 
-                type:'bar', 
-                data:{ labels:lbls, datasets:[{ data:dsc, backgroundColor:'#f59e0b' }] }, 
-                options:{
-                    responsive:true, maintainAspectRatio:false,
-                    plugins: { legend: {display: false}, datalabels: createLabelsConfig(realTotalDisc) }
-                } 
-            });
-            
-            const rTbody = document.getElementById('rankingTableBody'); 
-            if(rTbody) {
-                rTbody.innerHTML = sorted.map(([k,v], i) => `
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-3 py-2 text-center font-bold text-slate-400">#${i+1}</td>
-                        <td class="px-3 py-2 font-bold">${k}</td>
-                        <td class="px-3 py-2 text-right font-bold text-blue-600">${formatCurrency(v.s, '')}</td>
-                        <td class="px-3 py-2 text-right text-accent font-bold">${(v.b?v.s/v.b*100:0).toFixed(1)}%</td>
-                        <td class="px-3 py-2 text-right text-slate-500">${(v.s?v.d/v.s*100:0).toFixed(2)}%</td>
-                    </tr>
-                `).join('');
+            const results = Array.from(map.values()).sort((a,b) => b.s - a.s);
+            if (results.length === 0) {
+                body.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-400 italic">Item tidak ditemukan</td></tr>`;
+            } else {
+                body.innerHTML = results.map(r => {
+                    const cleanName = parseSkuInfo(r.sku, r.itemDesc).desc;
+                    return `<tr class="hover:bg-blue-50/30 transition-colors">
+                        <td class="px-3 py-1.5 border border-slate-200">${r.deptCode}</td>
+                        <td class="px-3 py-1.5 border border-slate-200 font-bold">${r.sku}</td>
+                        <td class="px-3 py-1.5 border border-slate-200 truncate max-w-[300px]">${cleanName}</td>
+                        <td class="px-3 py-1.5 border border-slate-200 text-right">${formatQty(r.sq)}</td>
+                        <td class="px-3 py-1.5 border border-slate-200 text-right">${formatQty(r.dq)}</td>
+                        <td class="px-3 py-1.5 border border-slate-200 text-right font-bold text-blue-600">${formatCurrency(r.s, '')}</td>
+                        <td class="px-3 py-1.5 border border-slate-200 text-right text-red-500">${formatCurrency(r.d, '')}</td>
+                        <td class="px-3 py-1.5 border border-slate-200 text-right text-amber-500">${formatCurrency(r.disc, '')}</td>
+                    </tr>`;
+                }).join('');
             }
+            container.classList.remove('hidden');
         }
 
-        function handleSort(col) { currentSort.direction = currentSort.column === col && currentSort.direction === 'asc' ? 'desc' : 'asc'; currentSort.column = col; sortAndRenderTable(); }
-        function sortAndRenderTable() {
-            filteredData.sort((a,b) => {
-                let vA = a[currentSort.column], vB = b[currentSort.column];
-                if(currentSort.column === 'date') { 
-                    vA = a.timestamp || 0; vB = b.timestamp || 0; 
-                } else {
-                    vA = String(vA || '').toLowerCase(); vB = String(vB || '').toLowerCase();
-                }
-                if (vA > vB) return currentSort.direction === 'asc' ? 1 : -1;
-                if (vA < vB) return currentSort.direction === 'asc' ? -1 : 1;
-                return 0;
-            });
-            
-            const tbody = document.getElementById('tableBody');
-            if(tbody) {
-                document.getElementById('tableRowCount').innerText = filteredData.length + ' baris';
-                
-                const rowsHtml = filteredData.slice(0, 300).map(r => 
-                    `<tr class="hover:bg-slate-100 transition-colors">
-                        <td class="px-4 py-2">${r.date}</td>
-                        <td class="px-4 py-2 font-bold whitespace-nowrap">${r.division}</td>
-                        <td class="px-4 py-2 text-slate-500">${r.deptCode||'-'}</td>
-                        <td class="px-4 py-2 text-[10px] truncate max-w-[150px]" title="${r.itemDesc||'-'}">${r.itemDesc||'-'}</td>
-                        <td class="px-4 py-2 text-right font-bold text-slate-800">${formatCurrency(r.sales,'')}</td>
-                        <td class="px-4 py-2 text-right text-slate-500">${formatCurrency(r.budget,'')}</td>
-                        <td class="px-4 py-2 text-right text-red-500 font-medium">${formatCurrency(r.disposal,'')}</td>
-                        <td class="px-4 py-2 text-right text-amber-500 font-medium">${formatCurrency(r.discount,'')}</td>
-                    </tr>`
-                ).join('');
-                
-                tbody.innerHTML = rowsHtml;
-                
-                document.querySelectorAll('th .sort-icon').forEach(el => el.className = 'sort-icon');
-                const th = document.querySelector(`th[data-sort="${currentSort.column}"]`);
-                if(th) th.querySelector('.sort-icon').classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
-            }
-        }
+        const debouncedSearch = () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(executeItemSearch, 300); };
+        document.getElementById('searchSku').oninput = debouncedSearch;
+        document.getElementById('searchDesc').oninput = debouncedSearch;
+        document.getElementById('btnClearSearch').onclick = () => {
+            document.getElementById('searchSku').value = '';
+            document.getElementById('searchDesc').value = '';
+            document.getElementById('searchResultContainer').classList.add('hidden');
+        };
 
+        // Reset
+        document.getElementById('btnOpenReset').onclick = () => document.getElementById('resetModal').classList.remove('hidden');
         document.getElementById('btnConfirmReset').onclick = async () => {
-            document.getElementById('btnConfirmReset').innerText = 'Menghapus...';
-            document.getElementById('btnConfirmReset').disabled = true;
-            
-            const colRef = getCloudRef();
-            const snap = await getDocs(query(colRef));
-            
-            const docsToDelete = [];
-            snap.forEach(d => docsToDelete.push(d.ref));
-            
-            // Hapus secara bertahap untuk menghindari error resource-exhausted
-            for (let i = 0; i < docsToDelete.length; i += 10) {
-                const batch = docsToDelete.slice(i, i + 10);
-                await Promise.all(batch.map(ref => deleteDoc(ref)));
-                await new Promise(r => setTimeout(r, 50)); // Jeda 50ms per batch
-            }
-            
+            const snap = await getDocs(query(getCloudRef()));
+            const refs = []; snap.forEach(d => refs.push(d.ref));
+            for (let i = 0; i < refs.length; i += 10) { await Promise.all(refs.slice(i, i+10).map(r => deleteDoc(r))); }
             location.reload();
         };
 
-        document.getElementById('btnBreakdownSales').onclick = () => {
-            const m = {}; let t = 0; 
-            filteredData.forEach(x => { 
-                t += x.sales; 
-                if(x.sales !== 0){ 
-                    let key = x.sku || 'UNKNOWN';
-                    if (!m[key]) m[key] = { ...parseSkuInfo(x.sku, x.itemDesc), sales: 0 };
-                    m[key].sales += x.sales;
-                    let cDesc = parseSkuInfo(x.sku, x.itemDesc).desc;
-                    if(cDesc.length > m[key].desc.length && cDesc !== 'TANPA NAMA') m[key].desc = cDesc;
-                } 
-            });
-            const s = Object.values(m).sort((a,b)=>b.sales - a.sales).slice(0,10);
-            
-            document.getElementById('salesBreakdownBody').innerHTML = s.map((v, i) => `
-                <tr class="hover:bg-blue-50/50 transition-colors">
-                    <td class="border border-slate-300 px-2 py-1.5 text-center text-slate-500">${i+1}</td>
-                    <td class="border border-slate-300 px-3 py-1.5 font-medium tracking-tight">${v.sku}</td>
-                    <td class="border border-slate-300 px-3 py-1.5 text-[11px] font-medium max-w-[200px] truncate" title="${v.desc}">${v.desc}</td>
-                    <td class="border border-slate-300 px-3 py-1.5 text-right font-bold text-slate-700">${formatCurrency(v.sales,'')}</td>
-                    <td class="border border-slate-300 px-3 py-1.5 text-right font-medium text-slate-600">${t ? (v.sales/t*100).toFixed(2) : '0.00'}%</td>
-                </tr>
-            `).join('');
-            
-            document.getElementById('salesTotalLabel').innerText = formatCurrency(t); 
-            document.getElementById('salesModal').classList.remove('hidden');
-        };
-
-        document.getElementById('btnBreakdownDisposal').onclick = () => {
-            const m = {}; let t = 0; 
-            filteredData.forEach(x => { 
-                t += x.disposal; 
-                let key = x.sku || 'UNKNOWN';
-                if (!m[key]) m[key] = { ...parseSkuInfo(x.sku, x.itemDesc), sales: 0, disposal: 0 };
-                m[key].sales += x.sales;
-                m[key].disposal += x.disposal;
-                let cDesc = parseSkuInfo(x.sku, x.itemDesc).desc;
-                if(cDesc.length > m[key].desc.length && cDesc !== 'TANPA NAMA') m[key].desc = cDesc;
-            });
-            
-            const s = Object.values(m).filter(entry => entry.disposal > 0).sort((a,b)=>b.disposal - a.disposal).slice(0,10);
-
-            document.getElementById('disposalBreakdownBody').innerHTML = s.map((v, i) => {
-                const dispToSalesPct = v.sales > 0 ? (v.disposal / v.sales * 100).toFixed(2) + '%' : 'N/A';
-                return `
-                    <tr class="hover:bg-red-50/50 transition-colors">
-                        <td class="border border-slate-300 px-2 py-1.5 text-center text-slate-500">${i+1}</td>
-                        <td class="border border-slate-300 px-3 py-1.5 font-medium tracking-tight">${v.sku}</td>
-                        <td class="border border-slate-300 px-3 py-1.5 text-[11px] font-medium max-w-[200px] truncate" title="${v.desc}">${v.desc}</td>
-                        <td class="border border-slate-300 px-3 py-1.5 text-right text-slate-600">${formatCurrency(v.sales, '')}</td>
-                        <td class="border border-slate-300 px-3 py-1.5 text-right font-bold text-slate-800">${formatCurrency(v.disposal, '')}</td>
-                        <td class="border border-slate-300 px-3 py-1.5 text-right font-semibold text-slate-600">${dispToSalesPct}</td>
-                        <td class="border border-slate-300 px-3 py-1.5 text-right font-medium text-slate-600">${t ? (v.disposal/t*100).toFixed(2) : '0.00'}%</td>
-                    </tr>
-                `;
-            }).join('');
-            
-            document.getElementById('disposalTotalLabel').innerText = formatCurrency(t); 
-            document.getElementById('disposalModal').classList.remove('hidden');
-        };
-
-        document.getElementById('btnBreakdownDiscount').onclick = () => {
-            const m = {}; let t = 0; 
-            filteredData.forEach(x => { 
-                t += x.discount; 
-                let key = x.sku || 'UNKNOWN';
-                if (!m[key]) m[key] = { ...parseSkuInfo(x.sku, x.itemDesc), sales: 0, discount: 0 };
-                m[key].sales += x.sales;
-                m[key].discount += x.discount;
-                let cDesc = parseSkuInfo(x.sku, x.itemDesc).desc;
-                if(cDesc.length > m[key].desc.length && cDesc !== 'TANPA NAMA') m[key].desc = cDesc;
-            });
-            
-            const s = Object.values(m).filter(entry => entry.discount > 0).sort((a,b)=>b.discount - a.discount).slice(0,10);
-
-            document.getElementById('discountBreakdownBody').innerHTML = s.map((v, i) => {
-                const discToSalesPct = v.sales > 0 ? (v.discount / v.sales * 100).toFixed(2) + '%' : 'N/A';
-                return `
-                    <tr class="hover:bg-amber-50/50 transition-colors">
-                        <td class="border border-slate-300 px-2 py-1.5 text-center text-slate-500">${i+1}</td>
-                        <td class="border border-slate-300 px-3 py-1.5 font-medium tracking-tight">${v.sku}</td>
-                        <td class="border border-slate-300 px-3 py-1.5 text-[11px] font-medium max-w-[200px] truncate" title="${v.desc}">${v.desc}</td>
-                        <td class="border border-slate-300 px-3 py-1.5 text-right text-slate-600">${formatCurrency(v.sales, '')}</td>
-                        <td class="border border-slate-300 px-3 py-1.5 text-right font-bold text-slate-800">${formatCurrency(v.discount, '')}</td>
-                        <td class="border border-slate-300 px-3 py-1.5 text-right font-semibold text-slate-600">${discToSalesPct}</td>
-                        <td class="border border-slate-300 px-3 py-1.5 text-right font-medium text-slate-600">${t ? (v.discount/t*100).toFixed(2) : '0.00'}%</td>
-                    </tr>
-                `;
-            }).join('');
-            
-            document.getElementById('discountTotalLabel').innerText = formatCurrency(t); 
-            document.getElementById('discountModal').classList.remove('hidden');
-        };
-
-        document.getElementById('btnOpenReset').onclick = () => document.getElementById('resetModal').classList.remove('hidden');
     </script>
 </body>
 </html>
